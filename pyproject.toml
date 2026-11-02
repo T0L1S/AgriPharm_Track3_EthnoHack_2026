@@ -1,0 +1,17 @@
+[project]
+name = "agripharm-track3-ethnohack-2026"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ChristosPaterakisntua", email = "christospaterakis1@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+agripharm-track3-ethnohack-2026 = "agripharm_track3_ethnohack_2026:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
