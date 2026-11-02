@@ -8,8 +8,11 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "matplotlib>=3.11.2",
     "openpyxl>=3.1.5",
     "pandas>=3.0.6",
+    "pmdarima>=2.1.1",
+    "sickitlearn>=0.2.5",
 ]
 
 [project.scripts]
