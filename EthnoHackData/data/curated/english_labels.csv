@@ -1,0 +1,11 @@
+﻿atc5,name_en,historical_priority_en,route_en
+M04AC01,Colchicine,Initial five,Plant isolation of colchicine
+C01AA05,Digoxin,Initial five,Plant digoxin/precursor route
+S01EB01,Pilocarpine,Initial five,Plant isolation of pilocarpine
+A04AD01,Scopolamine,Initial five,Plant isolation of scopolamine
+S01FA01,Atropine,Initial five,Plant hyoscyamine and racemization to atropine
+D06BB04,Podophyllotoxin,Conditional extension,Plant isolation of podophyllotoxin
+P01BF01,Artemether (combination component),Extension,Artemisinin followed by artemether semisynthesis
+L01CA04,Vinorelbine,Extension,Semisynthesis from plant alkaloids
+L01CB01,Etoposide,Extension,Podophyllotoxin followed by etoposide semisynthesis
+A06AC01,Ispaghula / psyllium,Historical alternative; not used,"Botanical husk material, not a single purified molecule"

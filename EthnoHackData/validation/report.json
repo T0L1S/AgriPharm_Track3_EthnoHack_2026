@@ -1,0 +1,93 @@
+{
+  "generated_at_utc": "2026-11-05T15:56:24.419378+00:00",
+  "python": "3.12.14",
+  "openpyxl": "3.1.5",
+  "scope": "Numerical reproducibility and structural consistency only",
+  "reported_final_substance_count": 8,
+  "final_scope_status": "PENDING_FINAL_ATC_LIST",
+  "status": "PASS",
+  "relative_tolerance": 1e-10,
+  "absolute_tolerance": 1e-09,
+  "checks": [
+    {
+      "name": "Snapshot SHA-256",
+      "status": "PASS",
+      "details": "36 files match the recorded SHA-256 snapshot; identity check only."
+    },
+    {
+      "name": "Rebuild from raw + curated inputs",
+      "status": "PASS",
+      "details": {
+        "candidates": 10,
+        "cip_records": 34,
+        "historical_atc_months": 60,
+        "forecast_atc_months": 60
+      }
+    },
+    {
+      "name": "Independent source-sheet reconciliation",
+      "status": "PASS",
+      "details": "60 ATC-months reconcile to CIP sums and rate components; 204 CIP-months reconcile to rate components. Observed counts are finite, non-negative integers."
+    },
+    {
+      "name": "Reproduced CSV: pack_mapping_34_CIP.csv",
+      "status": "PASS",
+      "details": "34 rows, 612 cells agree with delivered snapshot (numeric tolerance or exact text)."
+    },
+    {
+      "name": "Reproduced CSV: conversion_factors_all_candidates.csv",
+      "status": "PASS",
+      "details": "10 rows, 180 cells agree with delivered snapshot (numeric tolerance or exact text)."
+    },
+    {
+      "name": "Reproduced CSV: monthly_calibration_mg_per_box.csv",
+      "status": "PASS",
+      "details": "60 rows, 240 cells agree with delivered snapshot (numeric tolerance or exact text)."
+    },
+    {
+      "name": "Reproduced CSV: forecast_boxes_dated.csv",
+      "status": "PASS",
+      "details": "12 rows, 84 cells agree with delivered snapshot (numeric tolerance or exact text)."
+    },
+    {
+      "name": "Reproduced CSV: forecast_converted_reference.csv",
+      "status": "PASS",
+      "details": "60 rows, 780 cells agree with delivered snapshot (numeric tolerance or exact text)."
+    },
+    {
+      "name": "Original shortlist workbook",
+      "status": "PASS",
+      "details": "10 selection totals, 60 historical rows (including financial amounts), and 34 CIP rows match the original Excel cached values."
+    },
+    {
+      "name": "Original boxes-to-plants workbook",
+      "status": "PASS",
+      "details": "10 factor rows and 60 forecast rows match the original Excel cached values. Formatting and every narrative cell are outside this numeric check."
+    },
+    {
+      "name": "Scope and explicit missing values",
+      "status": "PASS",
+      "details": "10 candidates retained; 5 forecast ATCs; 3 plant factors remain missing; all 10 planning approvals remain 0."
+    },
+    {
+      "name": "English views and scope disclosure",
+      "status": "PASS",
+      "details": "Five English CSV views (124 rows) and the four-sheet review workbook agree with their historical sources. Psyllium is marked not used. Final eight-ATC membership remains a separate scope issue."
+    },
+    {
+      "name": "Converter unit tests",
+      "status": "PASS",
+      "details": "14 test methods passed, including invalid-input subcases, dimensional arithmetic, planning guards, and all-10-candidate synthetic coverage."
+    }
+  ],
+  "unresolved_limitations": [
+    "The team reports using eight substances and excludes psyllium. The exact final eight ATCs have not been supplied; one additional excluded candidate is unidentified. Numerical checks cover historical research, not a finalized eight-substance selection.",
+    "Curated pack compositions and botanical references were exported from the delivered artifacts. Numerical agreement is not independent verification of their scientific evidence.",
+    "No validated net extraction/manufacturing recovery is supplied; no final demand.csv or crop plan is certified.",
+    "Atropine sulfate hydration/base-equivalent assumption remains unresolved for the French products.",
+    "Podophyllotoxin, vinorelbine and etoposide lack usable complete plant-to-API factors.",
+    "Historical Jan–Jun 2026 pack mix is held fixed; future mix and actual plant-derived supply shares are unknown.",
+    "Forecast dates come from Paterakis’s message. Training data, backtesting and forecast accuracy are outside this package.",
+    "Cultivation region, yield per area, cycles, costs, storage decay and competing uses of shared precursors are not validated."
+  ]
+}
