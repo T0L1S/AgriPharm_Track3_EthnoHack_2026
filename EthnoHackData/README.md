@@ -1,8 +1,7 @@
 <div align="center">
 
-# 🌿 EthnoHackData
-<img src="AgriPharm.png" width="300">
-### From medicine demand to plant-material requirements
+<img src="AgriPharm.png" width="850" alt="EthnoHackData — From medicine demand to plant-material requirements">
+
 
 **Ethno Hack 2026 · Data & drug-to-plant mapping · Panoramix**
 
