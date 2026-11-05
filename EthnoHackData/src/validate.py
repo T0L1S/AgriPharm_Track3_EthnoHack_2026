@@ -213,7 +213,7 @@ def validate(root=ROOT):
             total += len(rows)
         require(scope['final_substance_count_reported_by_team'] == 8, 'Team-reported final count changed')
         require('A06AC01' in scope['confirmed_excluded_atc5'], 'Psyllium exclusion missing')
-        workbook = openpyxl.load_workbook(root / 'outputs/english/EthnoHack_Data_Review_EN.xlsx', data_only=True)
+        workbook = openpyxl.load_workbook(root / 'outputs/english/EthnoHack_Data_Reviewed_EN.xlsx', data_only=True)
         try:
             candidates = expected['candidates_en.csv']
             rows = list(workbook['Scope'].iter_rows(min_row=6, max_row=15, values_only=True))

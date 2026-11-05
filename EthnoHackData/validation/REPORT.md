@@ -1,12 +1,12 @@
-# Reproducibility checks | By Panoramix
+# Reproducibility checks — Role A
 
-UTC: `2026-11-05T15:56:24.419378+00:00`
+UTC: `2026-11-05T18:27:04.255827+00:00`
 
 Historical numerical/structural result: **PASS**. This does not validate agricultural or manufacturing parameters.
 
 Final project scope: **8 substances reported; psyllium not used**. Membership status: `PENDING_FINAL_ATC_LIST`. Historical candidate counts below are not the final selection.
 
-Python 3.12.14 · openpyxl 3.1.5 · relative tolerance 1e-10, absolute tolerance 1e-09.
+Python 3.13.18 · openpyxl 3.1.5 · relative tolerance 1e-10, absolute tolerance 1e-09.
 
 | Check | Result | Finding |
 |---|---|---|

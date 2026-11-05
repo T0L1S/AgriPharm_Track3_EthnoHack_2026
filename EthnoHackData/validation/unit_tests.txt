@@ -14,6 +14,6 @@ test_unknown_atc_rejected (test_converter.ConverterTests.test_unknown_atc_reject
 test_zero_forecast_is_valid (test_converter.ConverterTests.test_zero_forecast_is_valid) ... ok
 
 ----------------------------------------------------------------------
-Ran 14 tests in 0.004s
+Ran 14 tests in 0.066s
 
 OK
