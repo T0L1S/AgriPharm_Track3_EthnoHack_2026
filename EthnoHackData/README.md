@@ -5,7 +5,7 @@
 
 **Ethno Hack 2026 · Data & drug-to-plant mapping · Panoramix**
 
-[Methodology](docs/METHODOLOGY.md) · [Explore the data](outputs/english/EthnoHack_Data_Review_EN.xlsx) · [Validation](validation/REPORT.md) · [Sources](docs/SOURCES.md)
+[Methodology](docs/METHODOLOGY.md) · [Explore the data](outputs/english/EthnoHack_Data_Reviewed_EN.xlsx) · [Validation](validation/REPORT.md) · [Sources](docs/SOURCES.md)
 
 </div>
 
@@ -24,7 +24,7 @@ This contribution builds that connection: it combines the team's French **Médic
 | To understand… | Open… |
 |---|---|
 | **How the conversion works** — decisions, formulas and assumptions | [Methodology](docs/METHODOLOGY.md) |
-| **What was produced** — candidates, factors, forecasts and pack mappings | [English review workbook](outputs/english/EthnoHack_Data_Review_EN.xlsx) |
+| **What was produced** — candidates, factors, forecasts and pack mappings | [English review workbook](outputs/english/EthnoHack_Data_Reviewed_EN.xlsx) |
 | **What was checked** — numerical consistency and reproducibility | [Validation report](validation/REPORT.md) |
 | **Where the inputs came from** — product and plant references | [Sources](docs/SOURCES.md) |
 | **What each field means** — units, identifiers and missing values | [Data dictionary](docs/DATA_DICTIONARY.md) |
@@ -72,11 +72,11 @@ The [recorded validation report](validation/REPORT.md) distinguishes numerical c
 
 **A numerical PASS confirms agreement with the recorded inputs and assumptions.** It does not independently establish botanical concentrations, manufacturing yields or forecast accuracy.
 
-From the `EthnoHackData/` folder, run:
+From the repository root, install and run the shared project environment with:
 
 ```bash
-python -m pip install -r requirements.txt
-python src/validate.py
+uv sync
+uv run python EthnoHackData/src/validate.py
 ```
 
 The validator rebuilds numerical CSVs under `build/`, runs tests and writes reports under `validation/`. The documented environment is Python 3.12.14 with openpyxl 3.1.5.
@@ -87,14 +87,19 @@ The validator rebuilds numerical CSVs under `build/`, runs tests and writes repo
 Rebuild numerical outputs or export English CSV views:
 
 ```bash
-python src/reproduce.py
-python src/export_english.py
+uv run python EthnoHackData/src/reproduce.py
+uv run python EthnoHackData/src/export_english.py
 ```
 
 Run the original converter in reference mode:
 
 ```bash
-python src/convert_forecast.py --forecast data/raw/forecast_in_boxes_12_months.csv --factors outputs/conversion_factors_all_candidates.csv --start-month 2026-08 --mode reference --output-dir build/converter_only
+uv run python EthnoHackData/src/convert_forecast.py \
+  --forecast EthnoHackData/data/raw/forecast_in_boxes_12_months.csv \
+  --factors EthnoHackData/outputs/conversion_factors_all_candidates.csv \
+  --start-month 2026-08 \
+  --mode reference \
+  --output-dir EthnoHackData/build/converter_only
 ```
 
 The converter uses Python's standard library. The optional English workbook builder uses Node.js and `@oai/artifact-tool`; it is not required for Python validation. Original temporary Excel-formatting scripts were not retained; reconstructed scripts reproduce numerical transformations rather than the original workbooks' styling or binary identity.
@@ -114,7 +119,7 @@ If tracked files have changed since the recorded run—including this README—t
 | [`tests/`](tests/) | Converter test cases |
 | [`validation/`](validation/) | Reports, test log and checksum manifest |
 | [`provenance/`](provenance/) | Historical metadata and delivery notes |
-| [`requirements.txt`](requirements.txt) | Python dependency |
+| [`requirements.txt`](requirements.txt) | Legacy Python dependency reference |
 
 `build/` is generated locally and excluded from Git. `.gitignore` and `.gitattributes` control generated files and byte-preserving text handling. Upload instructions are in the [GitHub guide](docs/GITHUB_GUIDE.md).
 
