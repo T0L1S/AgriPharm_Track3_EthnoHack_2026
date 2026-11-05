@@ -1,0 +1,14 @@
+{
+  "team_report_date": "2026-11-03",
+  "final_substance_count_reported_by_team": 8,
+  "confirmed_excluded_atc5": [
+    "A06AC01"
+  ],
+  "confirmed_excluded_names": [
+    "Ispaghula / psyllium"
+  ],
+  "final_selected_atc5": null,
+  "selection_status": "PENDING_FINAL_ATC_LIST",
+  "historical_candidate_atc_count": 10,
+  "note": "The team confirmed eight final substances and that psyllium was not used. The earlier shortlist has nine pharmaceutical candidates plus psyllium. The other exclusion or the complete eight-ATC list has not yet been supplied. Historical files must not be described as the final eight-substance dataset."
+}

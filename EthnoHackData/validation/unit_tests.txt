@@ -1,0 +1,19 @@
+test_all_ten_candidates_and_missing_extensions (test_converter.ConverterTests.test_all_ten_candidates_and_missing_extensions) ... ok
+test_dimensional_reference_example (test_converter.ConverterTests.test_dimensional_reference_example) ... ok
+test_duplicate_atc_factors_rejected (test_converter.ConverterTests.test_duplicate_atc_factors_rejected) ... ok
+test_duplicate_csv_columns_rejected (test_converter.ConverterTests.test_duplicate_csv_columns_rejected) ... ok
+test_duplicate_month_rejected (test_converter.ConverterTests.test_duplicate_month_rejected) ... ok
+test_index_needs_explicit_start_date (test_converter.ConverterTests.test_index_needs_explicit_start_date) ... ok
+test_invalid_demands_rejected (test_converter.ConverterTests.test_invalid_demands_rejected) ... ok
+test_invalid_recovery_and_share_rejected (test_converter.ConverterTests.test_invalid_recovery_and_share_rejected) ... ok
+test_missing_material_factor_stays_missing (test_converter.ConverterTests.test_missing_material_factor_stays_missing) ... ok
+test_planning_recovery_and_share_dimensions (test_converter.ConverterTests.test_planning_recovery_and_share_dimensions) ... ok
+test_planning_requires_recovery_and_evidence (test_converter.ConverterTests.test_planning_requires_recovery_and_evidence) ... ok
+test_unapproved_planning_rejected (test_converter.ConverterTests.test_unapproved_planning_rejected) ... ok
+test_unknown_atc_rejected (test_converter.ConverterTests.test_unknown_atc_rejected) ... ok
+test_zero_forecast_is_valid (test_converter.ConverterTests.test_zero_forecast_is_valid) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.066s
+
+OK
