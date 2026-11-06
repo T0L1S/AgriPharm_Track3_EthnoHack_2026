@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+@theme { --font-mono: "JetBrains Mono", monospace; }
+
+/* Χρώμα αξόνων στο Light Mode */
+.recharts-cartesian-axis-tick-value tspan {
+  fill: #6b7280; /* text-gray-500 */
+}
+/* Χρώμα αξόνων στο Dark Mode */
+.dark .recharts-cartesian-axis-tick-value tspan {
+  fill: #9ca3af; /* text-gray-400 */
+}
+
+/* Διόρθωση overlap για το tooltip των γραφημάτων */
+.recharts-tooltip-wrapper {
+  z-index: 50 !important;
+} 
+
+.lora-font {
+  font-family: "Lora", serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: italic;
+}
+
