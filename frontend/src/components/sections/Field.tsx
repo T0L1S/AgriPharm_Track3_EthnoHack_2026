@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Badge } from '@/components/tremor/Badge';
 import { Slider } from '@/components/tremor/Slider';
 import { Divider } from '@/components/tremor/Divider';
 import { BarList } from '@/components/tremor/BarList';
@@ -18,12 +20,25 @@ const MONTH_NAMES = [
 ];
 
 const CROP_COLORS: Record<string, { bg: string, text: string }> = {
-  'echinacea': { bg: 'bg-emerald-500', text: 'text-emerald-400' },
-  'thyme': { bg: 'bg-lime-400', text: 'text-lime-300' },
-  "chamomile": { bg: 'bg-purple-500', text: 'text-purple-400' },
-  'valerian': { bg: 'bg-amber-400', text: 'text-amber-300' },
-  'hypericum': { bg: 'bg-rose-500', text: 'text-rose-400' },
-  'milk_thistle': { bg: 'bg-sky-400', text: 'text-sky-300' },
+  'gloriosa_superba_seed': { bg: 'bg-emerald-500', text: 'text-emerald-400' },
+  'digitalis_lanata_leaf': { bg: 'bg-lime-400', text: 'text-lime-300' },
+  "pilocarpus_microphyllus_leaf": { bg: 'bg-purple-500', text: 'text-purple-400' },
+  'catharanthus_roseus_leaf': { bg: 'bg-amber-400', text: 'text-amber-300' },
+  'atropa_belladonna_leaf': { bg: 'bg-rose-500', text: 'text-rose-400' },
+  'artemisia_annua_leaf': { bg: 'bg-sky-400', text: 'text-sky-300' },
+};
+
+// 1. Προσθήκη του mapping από το αρχείο CSV
+const PLANT_SPECIES_MAPPING: Record<string, string> = {
+  'gloriosa_superba_seed': 'Gloriosa superba',
+  'digitalis_lanata_leaf': 'Digitalis lanata',
+  'pilocarpus_microphyllus_leaf': 'Pilocarpus microphyllus',
+  'duboisia_hybrid_leaf': 'Duboisia myoporoides × D. leichhardtii',
+  'atropa_belladonna_leaf': 'Atropa belladonna',
+  'podophyllum_peltatum_leaf': 'Podophyllum peltatum',
+  'artemisia_annua_leaf': 'Artemisia annua',
+  'catharanthus_roseus_leaf': 'Catharanthus roseus',
+  'plantago_ovata_husk': 'Plantago ovata'
 };
 
 export const Field: React.FC<FieldProps> = ({ 
@@ -111,7 +126,11 @@ export const Field: React.FC<FieldProps> = ({
     // Math.min για αποφυγή υπέρβασης των 100 κελιών λόγω στρογγυλοποιήσεων
     const tilesToPush = Math.min(crop.visualTiles, 100 - occupiedVisualTiles);
     for (let i = 0; i < tilesToPush; i++) {
-      gridCells.push({ name: crop.name, color: crop.color });
+      gridCells.push({ 
+        // 2. Χρήση του επιστημονικού ονόματος στο tooltip του grid (προαιρετικά)
+        name: PLANT_SPECIES_MAPPING[crop.name] || crop.name, 
+        color: crop.color 
+      });
     }
     occupiedVisualTiles += tilesToPush;
   });
@@ -126,8 +145,13 @@ export const Field: React.FC<FieldProps> = ({
   }
 
   return (
-    <div className="relative rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/40 dark:bg-gray-900/30 backdrop-blur-md shadow-sm dark:shadow-xl border border-slate-800/80 bg-slate-900/40 ring-1 ring-white/5 overflow-hidden">
-      
+    <motion.div 
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="relative rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/40 dark:bg-gray-900/30 backdrop-blur-md shadow-sm dark:shadow-xl border border-slate-800/80 bg-slate-900/40 ring-1 ring-white/5 overflow-hidden"
+    >
       {/* Loading Overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/40 dark:bg-slate-950/50 backdrop-blur-sm transition-all duration-300">
@@ -147,10 +171,10 @@ export const Field: React.FC<FieldProps> = ({
           <div className="flex items-center gap-3">
             <div>
               <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
-                Arable Land Allocation Simulator
+                Interactive Simulator
               </h2>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-0.5">
-                Visualizing active medicinal plot sowing across the annual cycle. (1 tile = {Math.max(1, Math.round(currentLand / 100))} stremmas)
+                Visualizing active medicinal plot sowing across the annual cycle. (1 tile = {Math.max(1, Math.round(currentLand / 10) / 10)} stremmas)
               </p>
             </div>
           </div>
@@ -172,21 +196,17 @@ export const Field: React.FC<FieldProps> = ({
               ))}
             </div>
 
-            <span className="px-3 py-1.5 font-mono text-sm font-semibold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tabular-nums">
-              {MONTH_NAMES[currentMonth]}
-            </span>
+            <Badge variant="success" className="font-semibold p-2">{MONTH_NAMES[currentMonth]}</Badge>
           </div>
         </div>
 
-        <Divider></Divider>
+        <Divider />
 
         {/* Slider για Available Land */}
         <div className="space-y-3 mb-8 bg-gray-50 dark:bg-slate-950/40 p-4 rounded-xl border border-gray-200 dark:border-slate-800/60">
           <div className="flex items-center justify-between text-sm text-gray-700 dark:text-slate-300 font-medium">
             <span>Available Land (Stremmas)</span>
-            <span className="text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md">
-              {currentLand}
-            </span>
+            <Badge className="font-mono">{currentLand}</Badge>
           </div>
 
           <Slider
@@ -194,9 +214,9 @@ export const Field: React.FC<FieldProps> = ({
             onValueChange={(val: number[]) => {
               onLandChange(val[0]);
             }}
-            min={100}
-            max={2000} 
-            step={100}
+            min={50}
+            max={1500} 
+            step={50}
             aria-label="Available Land Selector"
             className="w-full"
           />
@@ -227,7 +247,10 @@ export const Field: React.FC<FieldProps> = ({
                   <div key={crop.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2.5">
                       <span className={`w-3.5 h-3.5 rounded-sm shadow-sm ${crop.color}`} />
-                      <span className="text-gray-700 dark:text-slate-200 font-medium">{crop.name}</span>
+                      {/* 3. Χρήση του επιστημονικού ονόματος στη λίστα (ή fallback στο raw name αν δε βρεθεί) */}
+                      <span className="text-gray-700 dark:text-slate-200 font-medium italic">
+                        {PLANT_SPECIES_MAPPING[crop.name] || crop.name}
+                      </span>
                     </div>
                     <span className={`font-mono text-xs font-semibold tabular-nums ${crop.textColor}`}>
                       {crop.stremmas} stremmas
@@ -256,7 +279,7 @@ export const Field: React.FC<FieldProps> = ({
                 <BarList 
                   data={simulationData.by_year.map((year: any, index: number) => ({
                     name: `Year ${index + 1}`,
-                    value: Math.round(year.coverage * 100)
+                    value: Math.round(year.coverage * 1000) / 10
                   }))}
                   valueFormatter={(value: number) => `${value}%`}
                   className="mt-3"
@@ -275,11 +298,9 @@ export const Field: React.FC<FieldProps> = ({
         {/* Tremor Timeline Slider & Month Clickables */}
         <div className="mt-6">
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400 font-mono font-medium px-1">
+            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400 font-medium px-1">
               <span>Crop Calendar Timeline</span>
-              <span className="text-emerald-500 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded">
-                {MONTH_NAMES[currentMonth]}
-              </span>
+              <Badge variant="success">{MONTH_NAMES[currentMonth]}</Badge>
             </div>
 
             <Slider
@@ -312,8 +333,7 @@ export const Field: React.FC<FieldProps> = ({
             </div>
           </div>
         </div>
-
       </div>
-    </div>
+    </motion.div>
   );
 };

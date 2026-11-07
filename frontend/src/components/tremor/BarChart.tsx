@@ -771,6 +771,7 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
                   layout !== "vertical"
                     ? "translate(-3, 0)"
                     : "translate(0, 0)",
+                fontFamily: "'JetBrains Mono', monospace",
               }}
               {...(layout !== "vertical"
                 ? {

@@ -1,0 +1,7 @@
+plant,sow_from,sow_to,t_base,t_opt_low,t_opt_high,t_max,temperature_source,temperature_url,calendar_source,calendar_url
+echinacea,4,4,6,18,28,33,assumed,,"OMAFRA: field seeding mid-May, transplanting May to June; moved a month earlier for western France",https://omafra.gov.on.ca/CropOp/en/herbs/medicinal/echin.html
+thyme,3,4,4,16,25,30,FAO EcoCrop,https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=2441,"OMAFRA: spring transplanting, first-year harvest after about 105 days",https://www.omafra.gov.on.ca/CropOp/en/herbs/culinary/thym.html
+chamomile,9,9,6,19,25,30,FAO EcoCrop,https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=7637,"Autumn sowing as in the Aydın trial; EcoCrop lists a 270 to 300 day cycle",https://agrifoodscience.com/index.php/TURJAF/article/download/6556/3240/56411
+valerian,3,3,3,14,24,30,assumed,,"Montana trials: spring planting, roots lifted in October of the first year",https://agresearch.montana.edu/warc/research_current/research_past/herbsandoils/valerian.html
+hypericum,10,10,5,15,25,30,assumed,,"Armuro: sown over winter, germinates from 5 to 6 °C; OMAFRA: harvested in early summer",https://www.armuro.com/en/st-johns-wort-planting-growing-harvesting/
+milk_thistle,9,10,2,12,28,33,assumed,,"Sown in autumn or spring, germinates from 2 °C, harvested in July or August",https://en.wikipedia.org/wiki/Silybum_marianum

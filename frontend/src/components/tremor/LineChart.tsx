@@ -670,7 +670,10 @@ const LineChart = React.forwardRef<HTMLDivElement, LineChartProps>(
               tickLine={false}
               type="number"
               domain={yAxisDomain as AxisDomain}
-              tick={{ transform: "translate(-3, 0)" }}
+              tick={{
+                transform: "translate(-3, 0)",
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
               fill=""
               stroke=""
               className={cx(

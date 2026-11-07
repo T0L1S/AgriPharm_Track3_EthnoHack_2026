@@ -1,0 +1,25 @@
+[project]
+name = "ethnohack-field-backend"
+version = "0.1.0"
+description = "Flask server that runs the crop optimizer and the seasonal simulation for the React site"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.1",
+    "numpy>=2.5.4",
+    "pulp[cbc]>=4.2.0",
+    "crop-opt",
+    "gunicorn>=26.2.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+crop-opt = { path = "../crop_opt" }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

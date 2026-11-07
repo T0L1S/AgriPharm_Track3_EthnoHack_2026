@@ -1,16 +1,5 @@
 # AgriPharm web client
 
-```bash
-cd backend
-uv run python server.py
-```
-
-Άνοιξε το http://localhost:8000. Το πρώτο τρέξιμο εγκαθιστά Flask και PuLP μόνο του.
-
-Το backend διαβάζει τον φάκελο `crop_opt` δίπλα του. Για άλλον φάκελο: `CROP_OPT_DIR=/διαδρομή/crop_opt uv run python server.py`.
-
-### Για αλλαγές στο React
-
 Θέλει Node 20.19+ και δύο τερματικά:
 
 ```bash

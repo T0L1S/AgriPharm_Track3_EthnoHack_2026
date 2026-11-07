@@ -1,3 +1,4 @@
+import { AnimatedSection } from '@/components/AnimatedSection';
 import { Card } from '@/components/tremor/Card';
 import { Divider } from '@/components/tremor/Divider';
 import { BarChart } from '@/components/tremor/BarChart';
@@ -11,7 +12,7 @@ import { formatPercent } from '@/lib/formattingUtils';
 
 export function BackTesting() {
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+    <AnimatedSection>
             {/* Left Column */}
             <div className="lg:col-span-5 flex flex-col gap-6">
               <div>
@@ -63,13 +64,13 @@ export function BackTesting() {
                 categories={['Mean Coverage', 'Minimum Coverage']}
                 colors={['blue', 'amber']}
                 valueFormatter={formatPercent}
-                yAxisWidth={75}
+                yAxisWidth={80}
                 interval={0}
                 angle={-25}
                 className="h-90"
               />
             </div>
-          </section>
+          </AnimatedSection>
   )
 }
 

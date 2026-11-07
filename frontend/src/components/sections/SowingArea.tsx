@@ -1,3 +1,4 @@
+import { AnimatedSection } from '@/components/AnimatedSection';
 import { Divider } from '@/components/tremor/Divider';
 import { CustomTooltip, CustomLegend } from '@/components/CustomGraphs';
 
@@ -18,7 +19,7 @@ import { penaltyData } from '@/data/chartData';
 
 export function SowingArea() {
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+    <AnimatedSection>
             {/* Left Column */}
             <div className="lg:col-span-5 flex flex-col gap-6">
               <div>
@@ -57,7 +58,7 @@ export function SowingArea() {
                 </ResponsiveContainer>
               </div>
             </div>
-          </section>
+          </AnimatedSection>
   )
 }
 

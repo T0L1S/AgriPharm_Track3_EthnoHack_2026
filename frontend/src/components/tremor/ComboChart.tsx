@@ -865,6 +865,7 @@ const ComboChart = React.forwardRef<HTMLDivElement, ComboChartProps>(
               )}
               tick={{
                 transform: "translate(-3, 0)",
+                fontFamily: "'JetBrains Mono', monospace",
               }}
               type="number"
               domain={barYAxisDomain as AxisDomain}
@@ -902,6 +903,7 @@ const ComboChart = React.forwardRef<HTMLDivElement, ComboChartProps>(
                 )}
                 tick={{
                   transform: "translate(3, 0)",
+                  fontFamily: "'JetBrains Mono', monospace",
                 }}
                 type="number"
                 domain={lineYAxisDomain as AxisDomain}

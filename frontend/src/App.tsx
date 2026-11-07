@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
 
-// UI imports
-import { Card } from '@/components/tremor/Card';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { 
+  Accordion, 
+  AccordionItem, 
+  AccordionTrigger, 
+  AccordionContent 
+} from "@/components/tremor/Accordion";
 
+import { Card } from '@/components/tremor/Card';
+import { Badge } from "@/components/tremor/Badge"
+
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Hero } from '@/components/sections/Hero';
 import { PlanComparison } from '@/components/sections/PlanComparison';
 import { Drought } from '@/components/sections/Drought';
-import { SowingArea } from '@/components/sections/SowingArea';
 import { Stochastic } from '@/components/sections/Stochastic';
 import { BackTesting } from '@/components/sections/BackTesting';
+import { MLForecast } from '@/components/sections/Forecast';
 import { Sweep } from '@/components/sections/Sweep';
-import { Field } from '@/components/Field';
+import { Field } from '@/components/sections/Field';
 
 import './App.css';
 
@@ -28,6 +36,7 @@ function App() {
 
   const fetchRun = async (landValue: number, currentWeights = {}, regionName?: string) => {
     setIsRunning(true);
+    setError(null); // Clear previous errors before running
     try {
       const response = await fetch('/api/run', {
         method: 'POST',
@@ -38,11 +47,12 @@ function App() {
           region: regionName 
         })
       });
-      if (!response.ok) throw new Error('An error occured during the simulation');
+      if (!response.ok) throw new Error('An error occurred during the simulation');
       const data = await response.json();
       setRunData(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || 'Failed to connect to the simulation engine.');
     } finally {
       setIsRunning(false);
     }
@@ -89,16 +99,100 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <p className="text-lg text-gray-700 dark:text-gray-300">Loading configuration...</p>
-      </div>
-    );
-  }
+      <div className="min-h-screen p-6 sm:p-8 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50">
+        {/* Navbar Skeleton */}
+        <header className="sticky top-0 z-50 w-full border-b border-gray-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-950/75 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 mb-6">
+          <div className="h-6 w-32 bg-gray-200 dark:bg-slate-800/60 rounded-md"></div>
+          <div className="h-8 w-16 bg-gray-200 dark:bg-slate-800/60 rounded-md"></div>
+        </header>
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <p className="text-lg text-red-600">Error: {error}</p>
+        {/* Hero Section Skeleton (Εκτός Κάρτας) */}
+        <div className="relative overflow-hidden py-12 sm:py-16 text-center max-w-4xl mx-auto px-4 animate-pulse mb-4">
+          <div className="inline-flex h-6 w-32 bg-gray-200 dark:bg-slate-800/60 rounded-full mb-6"></div>
+          <div className="h-16 sm:h-20 w-3/4 mx-auto bg-gray-200 dark:bg-slate-800/60 rounded-xl mb-6"></div>
+          <div className="h-6 w-2/3 mx-auto bg-gray-200 dark:bg-slate-800/40 rounded-lg mb-8"></div>
+          <div className="flex justify-center gap-6">
+            <div className="h-4 w-40 bg-gray-200 dark:bg-slate-800/50 rounded-full"></div>
+            <div className="h-4 w-40 bg-gray-200 dark:bg-slate-800/50 rounded-full"></div>
+            <div className="h-4 w-40 bg-gray-200 dark:bg-slate-800/50 rounded-full"></div>
+          </div>
+        </div>
+        
+        {/* Main Content Skeleton (Η Κεντρική Κάρτα) */}
+        <div className="max-w-7xl mx-auto p-6 sm:p-10 border border-gray-200 dark:border-gray-800 bg-white/40 dark:bg-gray-900/30 rounded-[2rem] shadow-sm">
+          <div className="space-y-24 animate-pulse">
+
+            {/* 1. ML Forecast Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-5 flex flex-col gap-6 pt-4">
+                <div className="h-8 bg-gray-200 dark:bg-slate-800/60 rounded-md w-3/4"></div>
+                <div className="h-5 bg-gray-200 dark:bg-slate-800/50 rounded w-1/2"></div>
+                <div className="space-y-3 mt-4">
+                  <div className="h-4 bg-gray-200 dark:bg-slate-800/40 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-slate-800/40 rounded w-5/6"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-slate-800/40 rounded w-4/5"></div>
+                </div>
+              </div>
+              <div className="lg:col-span-7 h-[380px] bg-gray-200 dark:bg-slate-800/50 rounded-2xl"></div>
+            </div>
+
+            {/* 2. Plan Comparison Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-5 flex flex-col gap-6">
+                <div className="h-8 bg-gray-200 dark:bg-slate-800/60 rounded-md w-2/3"></div>
+                <div className="space-y-3 mt-2">
+                  <div className="h-4 bg-gray-200 dark:bg-slate-800/40 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-slate-800/40 rounded w-11/12"></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-6">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-32 bg-gray-200 dark:bg-slate-800/50 rounded-xl"></div>
+                  ))}
+                </div>
+              </div>
+              <div className="lg:col-span-7 h-[500px] bg-gray-200 dark:bg-slate-800/50 rounded-2xl"></div>
+            </div>
+
+            {/* 3. Field Simulator Skeleton */}
+            <div className="flex flex-col gap-8">
+              <div className="h-16 w-full bg-gray-200 dark:bg-slate-800/50 rounded-2xl"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-7 h-[450px] bg-gray-200 dark:bg-slate-800/50 rounded-2xl"></div>
+                <div className="lg:col-span-5 flex flex-col gap-6">
+                  <div className="h-56 bg-gray-200 dark:bg-slate-800/50 rounded-xl"></div>
+                  <div className="h-48 bg-gray-200 dark:bg-slate-800/50 rounded-xl mt-auto"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Drought Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-5 flex flex-col gap-6 pt-4">
+                <div className="h-8 bg-gray-200 dark:bg-slate-800/60 rounded-md w-2/3"></div>
+                <div className="space-y-3 mt-2">
+                  <div className="h-4 bg-gray-200 dark:bg-slate-800/40 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-slate-800/40 rounded w-3/4"></div>
+                </div>
+              </div>
+              <div className="lg:col-span-7 h-[300px] bg-gray-200 dark:bg-slate-800/50 rounded-2xl flex items-center justify-around p-8">
+                 <div className="h-40 w-40 rounded-full bg-gray-300 dark:bg-slate-700/50"></div>
+                 <div className="h-40 w-40 rounded-full bg-gray-300 dark:bg-slate-700/50"></div>
+              </div>
+            </div>
+
+            {/* 5. Extended Technical Validation (Accordion Bars) Skeleton */}
+            <div className="pt-10 border-t border-gray-200 dark:border-slate-800/80 space-y-4">
+              <div className="mb-6">
+                <div className="h-8 bg-gray-200 dark:bg-slate-800/60 rounded-md w-1/2 mb-3"></div>
+                <div className="h-4 bg-gray-200 dark:bg-slate-800/40 rounded-md w-1/3"></div>
+              </div>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-20 w-full bg-gray-200 dark:bg-slate-800/50 rounded-2xl"></div>
+              ))}
+            </div>
+
+          </div>
+        </div>
       </div>
     );
   }
@@ -133,9 +227,35 @@ function App() {
         </div>
       </header>
 
+      <Hero />
+
       <Card className="sm:mx-auto max-w-7xl p-6 sm:p-10">
         <div className="space-y-24">
-          {runData && runData.sim && runData.lp && (
+          <MLForecast />
+          <PlanComparison comparisonData={runData?.comparison} />
+
+          {error ? (
+            <div className="flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 text-center min-h-[300px]">
+              <div className="p-3 bg-red-100 dark:bg-red-900/50 rounded-full mb-4">
+                <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Simulation Engine Unavailable</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-md">
+                We couldn't connect to the backend solver. You can still explore the rest of the static reports and analyses on this page.
+              </p>
+              <div className="mt-4 px-3 py-2 bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/30 rounded-md">
+                <code className="text-xs text-red-600 dark:text-red-400">{error}</code>
+              </div>
+              <button 
+                onClick={() => fetchRun(currentLand, {}, config?.default_region)}
+                className="mt-6 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : runData && runData.sim && runData.lp ? (
             <Field 
               simulationData={runData.sim} 
               plantsConfig={config?.plants} 
@@ -147,17 +267,67 @@ function App() {
               }}
               isLoading={isRunning}
             />
-          )}
+          ) : null}
 
-          <PlanComparison />
-          <Drought />
-          <SowingArea />
-          <Stochastic />
-          <BackTesting />
+          <Drought droughtData={runData?.drought_test} />
+          
+          {/* Extended Technical Validation */}
+          <div className="pt-10 border-t border-gray-200 dark:border-slate-800/80">
+            <div className="mb-6">
+              <h3 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
+                Extended Model Verification & Stress Tests
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Mathematical sensitivity sweeps, scenario probability distributions, and retrospective replays.
+              </p>
+            </div>
 
-          {sweepData && sweepData.length > 0 && (
-            <Sweep data={sweepData} />
-          )}
+            <Accordion type="multiple" className="space-y-4">
+              <AccordionItem value="stochastic">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-3">
+                    <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      Stochastic Optimization Analysis
+                    </span>
+                    <Badge variant="neutral" className="text-xs">Stochastic LP</Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <Stochastic stochasticData={runData?.stochastic_optimization} />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="backtesting">
+                <AccordionTrigger>
+                  <div className="flex items-center gap-3">
+                    <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                      12-Year Historical Back-Testing
+                    </span>
+                    <Badge variant="neutral" className="text-xs">Validation</Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <BackTesting />
+                </AccordionContent>
+              </AccordionItem>
+
+              {sweepData && sweepData.length > 0 && (
+                <AccordionItem value="sweep">
+                  <AccordionTrigger>
+                    <div className="flex items-center gap-3">
+                      <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                        Arable Land Sensitivity Sweep
+                      </span>
+                      <Badge variant="neutral" className="text-xs">Parametric</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <Sweep data={sweepData} />
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+            </Accordion>
+          </div>
         </div>
       </Card>
     </main>

@@ -5,8 +5,8 @@ export const formatEuro = (number: number) =>
 export const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
 export const getProgressVariant = (value: number) => {
-  if (value >= 95) return "success"; 
-  if (value >= 85) return "default"; 
-  if (value >= 75) return "warning"; 
+  if (value >= 90) return "success"; 
+  if (value >= 75) return "default"; 
+  if (value >= 60) return "warning"; 
   return "error";                    
 };

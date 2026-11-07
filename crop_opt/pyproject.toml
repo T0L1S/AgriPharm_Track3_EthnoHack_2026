@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "T0L1S", email = "apostolos.bilas@gmail.com" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
     "iteround>=1.0.4",
     "numpy>=2.5.4",
