@@ -5,3 +5,6 @@ data/raw
 __pycache__/
 
 models/
+*.lp
+.DS_Store
+.pytest_cache/

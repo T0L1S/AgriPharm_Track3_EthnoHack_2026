@@ -12,7 +12,7 @@ dependencies = [
     "openpyxl==3.1.5",
     "pandas>=3.0.6",
     "pmdarima>=2.1.1",
-    "sickitlearn>=0.2.5",
+    "scikit-learn>=1.9.1",
 ]
 
 [project.scripts]

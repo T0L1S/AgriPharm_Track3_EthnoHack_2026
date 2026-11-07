@@ -1,0 +1,21 @@
+[project]
+name = "crop-opt"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "T0L1S", email = "apostolos.bilas@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "iteround>=1.0.4",
+    "numpy>=2.5.4",
+    "pulp[cbc]>=4.2.0",
+]
+
+[project.scripts]
+crop-opt = "crop_opt:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
