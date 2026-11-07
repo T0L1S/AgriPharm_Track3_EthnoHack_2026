@@ -89,7 +89,7 @@ The model plans four years but reports years 1–3. Year 4 is a buffer against t
 
 ### Why year 1 coverage is low
 
-With a cold start (no initial stock) nothing can be served until the first harvest, i.e. for the first `cycle` months of every plant. Year 1 therefore reflects the start-up of the farm; year 2 shows the steady state and the prediction model is actually being applied; year 3 is what happens if we apply the same plan next year. Since the prediction is only for one year, year 3 is being shows for reasons of completeness. 
+With a cold start (no initial stock) nothing can be served until the first harvest, i.e. for the first `cycle` months of every plant. Year 1 therefore reflects the start-up of the farm; year 2 shows the steady state and the prediction model is actually being applied; year 3 is what happens if we apply the same plan next year. Since the prediction is only for one year, year 3 is shown for reasons of completeness. 
 
 ---
 
@@ -214,8 +214,8 @@ show(x, u, s, plants, cycle, demand, constraints["land"])
 
 - **Plan start month is fixed to January.** Calendar logic uses `t mod 12`, so month 0 must be January. The forecast starts in August 2026; build `demand.csv` by calendar month (see [`docs/DATA_CONTRACTS.md`](../docs/DATA_CONTRACTS.md)).
 - **Weights are per kg.** With equal weights the LP maximises total kg, so a plant that gives few kg per stremma-month can get no land at all (milk thistle in the current data). When demands differ by orders of magnitude, choose weights deliberately — for example `1 / annual demand`, which makes the LP maximise average % coverage across plants.
-- **`EPS` is absolute.** If weights are really small (e.g. 0.01), the 0.001 stock penalty is no longer negligible and changes the plan. `EPS` is a micro-adjustement for the model to run properly and does not affect the end result otherwise.
-- **The plant cycle must be less than 12 months**.
+- **`EPS` is absolute.** If weights are really small (e.g. 0.01), the 0.001 stock penalty is no longer negligible and changes the plan. `EPS` is a micro-adjustment for the model to run properly and does not affect the end result otherwise.
+- **Cycles of 12 months or longer are not supported**.
 - **All-zero demand** passes validation, then the `Year_` percentage divides by zero.
 
 ## Layout
