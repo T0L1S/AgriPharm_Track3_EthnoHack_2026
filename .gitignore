@@ -4,5 +4,6 @@ data/raw
 
 __pycache__/
 
-models/*.lp
+models/
+*.lp
 .DS_Store
