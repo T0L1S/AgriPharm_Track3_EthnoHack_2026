@@ -318,7 +318,7 @@ function App() {
                 <AccordionTrigger>
                   <div className="flex items-center gap-3">
                     <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                      12-Year Historical Back-Testing
+                      11-Year Historical Back-Testing
                     </span>
                     <Badge variant="neutral" className="text-xs">Validation</Badge>
                   </div>

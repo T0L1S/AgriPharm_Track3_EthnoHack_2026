@@ -26,6 +26,7 @@ def optimize(demand, plants, cycle, constraints, init_stock, fixed=None, drought
 	s = cropoptim.add_variable_dicts("Stock", keys_tmp, lowBound = 0, cat = pulp.LpContinuous)
 
 	cropoptim += pulp.lpSum(plants[p]["weight"] * u[p, t] - EPS * s[p, t]  for p in plants for t in T)  #what we want to maximize
+	
 
 #constraints
 	for t in T:
@@ -37,8 +38,9 @@ def optimize(demand, plants, cycle, constraints, init_stock, fixed=None, drought
 				if (has_drought(t, p, cycle, constraints)):
 					harv = harv * drought_fctr
 			cropoptim += s[p, t] == prev + harv - u[p, t]
+		if fixed is None:
+			cropoptim += pulp.lpSum(x[p, (t - k)] for p in plants for k in range(cycle[p]) if t - k >= 0) <= constraints["land"]
 
-		cropoptim += pulp.lpSum(x[p, (t - k)] for p in plants for k in range(cycle[p]) if t - k >= 0) <= constraints["land"]
 
 	for p in plants:
 		for t in T:

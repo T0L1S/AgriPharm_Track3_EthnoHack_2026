@@ -47,9 +47,13 @@ def solve(plants: dict[str, dict], demand_csv: str, demand: dict[str, list[float
         covered_yr3 = sum(u[name, t].varValue for t in range(24, 36))
         demand_yr3 = sum(demand[name])
         
-        # Υπολογισμός area βάσει της απόδοσης στο Έτος 3 (κανονική λειτουργία)
-        lp_area = sum(x[name, t].varValue for t in range(24, 36))
-        area = covered_yr3 / plant["yield_kg"] if plant["yield_kg"] > 0 else 0.0
+        # Land the optimizer actually sows for this plant in year 2 (months 12-23), its steady
+        # state: past the empty start, and far enough from the end of the 48-month horizon that
+        # every crop sown is harvested and fully used. (Year-3 sowing is distorted by the horizon:
+        # a 12-month crop sown then only has to cover the last months of year 4.) This is the plan
+        # the simulation and the field grid repeat every year.
+        lp_area = sum(x[name, t].varValue for t in range(12, 24))
+        area = lp_area
 
         results[name] = {
             "area": area,

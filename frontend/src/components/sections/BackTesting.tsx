@@ -39,7 +39,7 @@ export function BackTesting({ data }: BackTestingProps) {
         
         <div className="space-y-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
           <p>A cultivation plan may appear optimal based on the available forecasts, but its actual effectiveness can only be assessed by how well it performs under real-world conditions.</p>
-          <p>The back-testing analysis evaluates the system's performance over 12 historical years, simulating the decision-making process as it would unfold in practice.</p>
+          <p>The back-testing analysis evaluates the system's performance over 11 historical years (2015–2025), simulating the decision-making process as it would unfold in practice.</p>
           <p>The system's performance is then compared to an ideal benchmark scenario <span className="italic">(hindsight)</span>, in which the actual demand and crop yield values are known from the beginning of each year.</p>
         </div>
 

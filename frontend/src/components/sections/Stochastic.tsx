@@ -77,6 +77,7 @@ export function Stochastic({ stochasticData }: StochasticProps) {
             <BarChart 
               data={dynamicExpectedData} 
               index="plan" 
+              interval={0}
               categories={['Expected Coverage']}
               colors={['blue']} 
               valueFormatter={formatPercent}

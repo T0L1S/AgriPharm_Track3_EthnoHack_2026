@@ -89,24 +89,32 @@ def _updated_demand_csv(plants: dict[str, dict]) -> str:
         
     return "\n".join(lines) + "\n"
 
-import csv
+def _read_historical_demand(filepath: Path = inputs.ASSUMPTIONS_DIR / "demand_last_12_years.csv") -> dict:
+    """Historical monthly demand per plant, as one list of 12 values (Jan..Dec) per calendar year.
 
-def _read_historical_demand(filepath="assumptions/demand_last_12_years.csv") -> dict:
+    The file's columns are dated "YYYY-MM" and do not start in January, so each value is placed
+    by its own month. Only calendar years with all 12 months present are kept, so no year is
+    padded with zeros and January demand always sits in the January slot, as in demand.csv.
+    """
     hist_demands = {}
     try:
-        with open(filepath, mode='r', encoding='utf-8') as f:
+        with open(filepath, mode="r", encoding="utf-8") as f:
             reader = csv.reader(f)
-            header = next(reader) # Προσπέραση του header
+            header = next(reader)
+            dates = [(int(col[:4]), int(col[5:7])) for col in header[1:]]
             for row in reader:
                 plant = row[0]
-                # Αν η τιμή είναι κενή (π.χ. στο catharanthus), την κάνουμε 0.0
-                values = [float(v) if v.strip() else 0.0 for v in row[1:]]
-                
-                # Χωρισμός των 144 μηνών σε 12 λίστες (μία για κάθε έτος)
-                plant_years = [values[i*12 : (i+1)*12] for i in range(12)]
-                hist_demands[plant] = plant_years
+                by_year: dict[int, dict[int, float]] = {}
+                for (year, month), value in zip(dates, row[1:]):
+                    # An empty value (e.g. catharanthus) counts as 0.0
+                    by_year.setdefault(year, {})[month] = float(value) if value.strip() else 0.0
+                hist_demands[plant] = [
+                    [months[m] for m in range(1, 13)]
+                    for year, months in sorted(by_year.items())
+                    if len(months) == 12
+                ]
     except Exception as e:
-        print(f"Προειδοποίηση: Δεν βρέθηκε το {filepath} ή υπήρξε σφάλμα ({e}).")
+        print(f"Warning: could not read {filepath} ({e}).")
     return hist_demands
 
 
@@ -286,7 +294,10 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
         "Proportional Allocation": []
     }
 
-    for year_idx in range(12):
+    # One replay per complete calendar year in the history file. A plant with no full
+    # year (catharanthus has no history) gets zero demand below.
+    n_years = max((len(years) for years in historical_demands.values()), default=0)
+    for year_idx in range(n_years):
         y_m = random.uniform(0.7, 1.1)
         hist_plants = copy.deepcopy(plants)
         for p in hist_plants:

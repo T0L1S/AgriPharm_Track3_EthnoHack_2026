@@ -10,7 +10,7 @@ import csv
 import os
 from pathlib import Path
 
-from simulation import Season
+from simulation import DEFAULT_SEASON, Season
 
 BACKEND_DIR = Path(__file__).resolve().parent
 CROP_OPT_DIR = Path(os.environ.get("CROP_OPT_DIR", BACKEND_DIR.parent / "crop_opt")).resolve()
@@ -52,7 +52,23 @@ def read_constraints() -> dict[str, float]:
 
 
 def read_seasons() -> dict[str, Season]:
-    return {}
+    """Sowing windows from data.csv, so the simulation sows in the same months as the optimizer.
+
+    data.csv counts months from 0 (0 = January) while Season counts from 1, hence the +1.
+    The temperature response is not in data.csv, so it keeps the default values.
+    """
+    seasons = {}
+    for name, plant in read_plants().items():
+        if "sown_from" in plant and "sown_to" in plant:
+            seasons[name] = Season(
+                sow_from=int(plant["sown_from"]) + 1,
+                sow_to=int(plant["sown_to"]) + 1,
+                t_base=DEFAULT_SEASON.t_base,
+                t_opt_low=DEFAULT_SEASON.t_opt_low,
+                t_opt_high=DEFAULT_SEASON.t_opt_high,
+                t_max=DEFAULT_SEASON.t_max,
+            )
+    return seasons
 
 def read_season_sources() -> dict[str, dict]:
     return {}

@@ -43,8 +43,21 @@ class Season:
 DEFAULT_SEASON = Season(sow_from=3, sow_to=4, t_base=5, t_opt_low=15, t_opt_high=25, t_max=32)
 
 
+# Temperature switch. Off: every crop grows at full speed all year, so each cycle lasts
+# exactly the `cycle` months in data.csv, as in the optimizer. On: growth follows the
+# climate's monthly temperatures and cold months stretch the cycle.
+USE_TEMPERATURE = False
+
+# Growth is added in small floating-point steps (e.g. 1/24 per week for a 6-month crop), and
+# 24 of them can sum to 0.99999... instead of 1. This tolerance makes the harvest happen in the
+# planned week instead of one week late.
+DONE = 1 - 1e-9
+
+
 def growth_rate(temp: float, season: Season) -> float:
     """Share of full growth speed at a temperature: the EcoCrop trapezoid."""
+    if not USE_TEMPERATURE:
+        return 1.0
     if temp <= season.t_base or temp >= season.t_max:
         return 0.0
     if temp < season.t_opt_low:
@@ -75,16 +88,15 @@ def square_count(area: float) -> int:
 
 
 def sow_weeks(season: Season, squares: int, strategy: str = "equal") -> list[int]:
-    """Week of the year each square is sown."""
+    """Week of the year each square is sown.
+
+    Every square is sown in the first week of the sowing window, as in crop_opt, where a plot
+    sown in month t is in the ground from the start of month t and its harvest is available from
+    the start of month t + cycle. `strategy` is kept for the callers; all strategies now sow the
+    same way and differ only in how much land each plant gets.
+    """
     start = (season.sow_from - 1) * STEPS_PER_MONTH
-    
-    # Naïve στρατηγική: Σπορά όλων των τετραγώνων την πρώτη διαθέσιμη εβδομάδα
-    if strategy == "naive":
-        return [start] * squares
-        
-    # Προεπιλογή (Equal/Optimized): Ισόποση κατανομή στο παράθυρο σποράς
-    window = ((season.sow_to - season.sow_from) % MONTHS_PER_YEAR + 1) * STEPS_PER_MONTH
-    return [(start + i * window // squares) % STEPS_PER_YEAR for i in range(squares)]
+    return [start] * squares
 
 
 def crop_calendar(cycle: float, season: Season, temperature: list[float]) -> dict:
@@ -94,7 +106,7 @@ def crop_calendar(cycle: float, season: Season, temperature: list[float]) -> dic
     for elapsed in range(1, STEPS_PER_YEAR * 2 + 1):
         week = (start + elapsed - 1) % STEPS_PER_YEAR
         progress += growth_rate(temperature[week], season) / (cycle * STEPS_PER_MONTH)
-        if progress >= 1:
+        if progress >= DONE:
             return {
                 "sow_week": start,
                 "harvest_week": (start + elapsed - 1) % STEPS_PER_YEAR,
@@ -137,7 +149,7 @@ def simulate_plant(
         for i in range(squares):
             if progress[i] is not None:
                 progress[i] += rates[week] * growth_per_step
-                if progress[i] >= 1:
+                if progress[i] >= DONE:
                     progress[i] = None
                     stubble[i] = STUBBLE_STEPS
                     stock += square_kg
