@@ -23,18 +23,6 @@ def climates():
     return inputs.read_climates()
 
 
-def greedy_covered(plants, demand, land):
-    """The LP's known answer: fill plants by weight x yield until land runs out.
-
-    Tests compare crop.py against this. The site itself never uses it.
-    """
-    covered = {name: 0.0 for name in plants}
-    left = land
-    ranked = sorted(plants, key=lambda name: plants[name]["weight"] * plants[name]["yield_kg"], reverse=True)
-    for name in ranked:
-        if plants[name]["weight"] <= 0:
-            continue
-        area = min(sum(demand[name]) / plants[name]["yield_kg"], left)
-        covered[name] = area * plants[name]["yield_kg"]
-        left -= area
-    return covered
+@pytest.fixture
+def constraints():
+    return inputs.read_constraints()

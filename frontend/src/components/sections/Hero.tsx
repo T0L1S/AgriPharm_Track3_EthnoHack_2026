@@ -31,7 +31,7 @@ export function Hero() {
       <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm font-medium text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-emerald-500" /> 
-          95.1% Peak Demand Coverage
+          Optimized sowing plan
         </span>
         <span className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-blue-500" /> 

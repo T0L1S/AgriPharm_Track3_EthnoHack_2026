@@ -20,8 +20,6 @@ import { MLForecast } from '@/components/sections/Forecast';
 import { Sweep } from '@/components/sections/Sweep';
 import { Field } from '@/components/sections/Field';
 
-import './App.css';
-
 const REPO_URL = 'https://github.com/T0L1S/AgriPharm_Track3_EthnoHack_2026';
 const TEAM = ['Apostolos Bilas', 'Diogenis Siganos', 'Panagiotis Mouroukos', 'Christos Paterakis'];
 
@@ -187,10 +185,17 @@ function App() {
             </div>
             {/* Omitted other skeleton sections for brevity but they remain identical */}
           </div>
+          <p role="status" className="mt-10 text-center text-sm text-slate-500 dark:text-slate-400">
+            Starting the simulation server. The first visit can take up to a minute.
+          </p>
         </div>
       </div>
     );
   }
+
+  // No results to show and the last request failed: the result sections say so
+  // instead of showing numbers that did not come from the model.
+  const resultsFailed = !!error && !runData;
 
   return (
     <main className="min-h-screen p-6 sm:p-8 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50">
@@ -255,7 +260,7 @@ function App() {
                 <code className="text-xs text-red-600 dark:text-red-400">{error}</code>
               </div>
               <button 
-                onClick={() => fetchRun(currentLand, currentWeights, config?.default_region)}
+                onClick={() => config ? fetchRun(currentLand, currentWeights, config.default_region) : window.location.reload()}
                 className="mt-6 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 Try Again
@@ -283,10 +288,10 @@ function App() {
           </div>
 
           <div id="comparison" className="scroll-mt-24">
-            <PlanComparison comparisonData={runData?.comparison} />
+            <PlanComparison comparisonData={runData?.comparison} failed={resultsFailed} />
           </div>
           <div id="drought" className="scroll-mt-24">
-            <Drought droughtData={runData?.drought_test} />
+            <Drought droughtData={runData?.drought_test} failed={resultsFailed} />
           </div>
           
           <div id="stress-tests" className="scroll-mt-24 pt-10 border-t border-gray-200 dark:border-slate-800/80">
@@ -310,7 +315,7 @@ function App() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <Stochastic stochasticData={runData?.stochastic_optimization} />
+                  <Stochastic stochasticData={runData?.stochastic_optimization} failed={resultsFailed} />
                 </AccordionContent>
               </AccordionItem>
 
@@ -318,13 +323,13 @@ function App() {
                 <AccordionTrigger>
                   <div className="flex items-center gap-3">
                     <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                      12-Year Historical Back-Testing
+                      11-Year Historical Back-Testing
                     </span>
                     <Badge variant="neutral" className="text-xs">Validation</Badge>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <BackTesting data={runData?.back_testing} />
+                  <BackTesting data={runData?.back_testing} failed={resultsFailed} />
                 </AccordionContent>
               </AccordionItem>
 

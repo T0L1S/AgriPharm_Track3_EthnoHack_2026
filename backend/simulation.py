@@ -20,7 +20,7 @@ YEARS = 3
 TOTAL_STEPS = STEPS_PER_YEAR * YEARS
 TOTAL_MONTHS = MONTHS_PER_YEAR * YEARS
 
-SQUARE_AREA = 10.0  # στρέμματα drawn by one square on the map
+SQUARE_AREA = 10.0  # stremmata drawn by one square on the map
 BARE = -1  # cell value: nothing planted
 STUBBLE = -2  # cell value: just harvested
 STUBBLE_STEPS = 3  # weeks a square stays as stubble after harvest
@@ -40,11 +40,42 @@ class Season:
     t_max: float  # °C, no growth at or above this
 
 
+@dataclass(frozen=True)
+class Drought:
+    """A dry spell that repeats every year, as in crop_opt's drought scenario.
+
+    A harvest whose crop was in the ground for any month from `start` to `end` gives only
+    `factor` of its normal yield. Months count from 0 (0 = January), as in constraints.csv.
+    """
+
+    factor: float  # share of the yield left, e.g. 0.75
+    start: int  # first dry month, 0 to 11
+    end: int  # last dry month, 0 to 11
+
+    def hits(self, sown_month: int, harvest_month: int) -> bool:
+        """True when any month the crop was growing (sowing month up to the month before
+        harvest) falls in the dry spell."""
+        return any(self.start <= m % MONTHS_PER_YEAR <= self.end for m in range(sown_month, harvest_month))
+
+
 DEFAULT_SEASON = Season(sow_from=3, sow_to=4, t_base=5, t_opt_low=15, t_opt_high=25, t_max=32)
+
+
+# Temperature switch. Off: every crop grows at full speed all year, so each cycle lasts
+# exactly the `cycle` months in data.csv, as in the optimizer. On: growth follows the
+# climate's monthly temperatures and cold months stretch the cycle.
+USE_TEMPERATURE = False
+
+# Growth is added in small floating-point steps (e.g. 1/24 per week for a 6-month crop), and
+# 24 of them can sum to 0.99999... instead of 1. This tolerance makes the harvest happen in the
+# planned week instead of one week late.
+DONE = 1 - 1e-9
 
 
 def growth_rate(temp: float, season: Season) -> float:
     """Share of full growth speed at a temperature: the EcoCrop trapezoid."""
+    if not USE_TEMPERATURE:
+        return 1.0
     if temp <= season.t_base or temp >= season.t_max:
         return 0.0
     if temp < season.t_opt_low:
@@ -75,16 +106,15 @@ def square_count(area: float) -> int:
 
 
 def sow_weeks(season: Season, squares: int, strategy: str = "equal") -> list[int]:
-    """Week of the year each square is sown."""
+    """Week of the year each square is sown.
+
+    Every square is sown in the first week of the sowing window, as in crop_opt, where a plot
+    sown in month t is in the ground from the start of month t and its harvest is available from
+    the start of month t + cycle. `strategy` is kept for the callers; all strategies now sow the
+    same way and differ only in how much land each plant gets.
+    """
     start = (season.sow_from - 1) * STEPS_PER_MONTH
-    
-    # Naïve στρατηγική: Σπορά όλων των τετραγώνων την πρώτη διαθέσιμη εβδομάδα
-    if strategy == "naive":
-        return [start] * squares
-        
-    # Προεπιλογή (Equal/Optimized): Ισόποση κατανομή στο παράθυρο σποράς
-    window = ((season.sow_to - season.sow_from) % MONTHS_PER_YEAR + 1) * STEPS_PER_MONTH
-    return [(start + i * window // squares) % STEPS_PER_YEAR for i in range(squares)]
+    return [start] * squares
 
 
 def crop_calendar(cycle: float, season: Season, temperature: list[float]) -> dict:
@@ -94,7 +124,7 @@ def crop_calendar(cycle: float, season: Season, temperature: list[float]) -> dic
     for elapsed in range(1, STEPS_PER_YEAR * 2 + 1):
         week = (start + elapsed - 1) % STEPS_PER_YEAR
         progress += growth_rate(temperature[week], season) / (cycle * STEPS_PER_MONTH)
-        if progress >= 1:
+        if progress >= DONE:
             return {
                 "sow_week": start,
                 "harvest_week": (start + elapsed - 1) % STEPS_PER_YEAR,
@@ -105,7 +135,8 @@ def crop_calendar(cycle: float, season: Season, temperature: list[float]) -> dic
 
 def simulate_plant(
     area: float, yield_kg: float, cycle: float, monthly_demand: list[float],
-    season: Season, temperature: list[float], strategy: str = "equal"
+    season: Season, temperature: list[float], strategy: str = "equal",
+    drought: Drought | None = None,
 ) -> dict:
     """Play one parcel week by week and track its stock against demand.
 
@@ -120,6 +151,7 @@ def simulate_plant(
     sow_at = sow_weeks(season, squares, strategy) if squares else []
 
     progress: list[float | None] = [None] * squares  # None means no crop in the ground
+    sown_month = [0] * squares  # month each square was last sown, for the drought check
     stubble = [0] * squares
     cells: list[list[int]] = []
     stock_by_step: list[float] = []
@@ -137,16 +169,20 @@ def simulate_plant(
         for i in range(squares):
             if progress[i] is not None:
                 progress[i] += rates[week] * growth_per_step
-                if progress[i] >= 1:
+                if progress[i] >= DONE:
                     progress[i] = None
                     stubble[i] = STUBBLE_STEPS
-                    stock += square_kg
-                    harvest[month] += square_kg
+                    kg = square_kg
+                    if drought is not None and drought.hits(sown_month[i], month):
+                        kg *= drought.factor
+                    stock += kg
+                    harvest[month] += kg
             elif stubble[i] > 0:
                 stubble[i] -= 1
             if progress[i] is None and week == sow_at[i]:
                 progress[i] = 0.0
                 stubble[i] = 0
+                sown_month[i] = month
                 sown[month] += 1
             if progress[i] is not None:
                 row.append(min(99, int(progress[i] * 100)))
@@ -217,9 +253,13 @@ def summarise(parcels: dict[str, dict]) -> list[dict]:
 
 def simulate(
     areas: dict[str, float], plants: dict[str, dict], demand: dict[str, list[float]],
-    seasons: dict[str, Season], monthly_temperature: list[float], strategy: str = "equal"
+    seasons: dict[str, Season], monthly_temperature: list[float], strategy: str = "equal",
+    drought: Drought | None = None,
 ) -> dict:
-    """Run every plant's parcel. Plants share land only through the optimizer's areas."""
+    """Run every plant's parcel. Plants share land only through the optimizer's areas.
+
+    With `drought`, harvests of crops that grew through the dry months lose part of their yield.
+    """
     temperature = weekly_temperature(monthly_temperature)
     parcels = {}
     calendars = {}
@@ -228,7 +268,7 @@ def simulate(
         parcels[name] = simulate_plant(
             area=areas.get(name, 0.0), yield_kg=plant["yield_kg"], cycle=plant["cycle"],
             monthly_demand=demand[name], season=season, temperature=temperature, 
-            strategy=strategy
+            strategy=strategy, drought=drought,
         )
         calendars[name] = crop_calendar(plant["cycle"], season, temperature)
     return {

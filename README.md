@@ -135,7 +135,7 @@ uv run python EthnoHackData/src/validate.py
 
 ---
 
-## 🔭 Future Develpment (Roadmap)
+## 🔭 Future Development (Roadmap)
 Our MVP is functional and geography-agnostic. To scale this into a global platform, our next steps include:
 1. **Local Pilot Studies:** Combine climate, soil, and water data with expert validation to assess cultivation scenarios in broader regions.
 2. **Updated Forecasts:** Automate data updates and monitor forecast accuracy as medicine demand changes.

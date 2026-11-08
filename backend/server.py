@@ -89,24 +89,32 @@ def _updated_demand_csv(plants: dict[str, dict]) -> str:
         
     return "\n".join(lines) + "\n"
 
-import csv
+def _read_historical_demand(filepath: Path = inputs.ASSUMPTIONS_DIR / "demand_last_12_years.csv") -> dict:
+    """Historical monthly demand per plant, as one list of 12 values (Jan..Dec) per calendar year.
 
-def _read_historical_demand(filepath="assumptions/demand_last_12_years.csv") -> dict:
+    The file's columns are dated "YYYY-MM" and do not start in January, so each value is placed
+    by its own month. Only calendar years with all 12 months present are kept, so no year is
+    padded with zeros and January demand always sits in the January slot, as in demand.csv.
+    """
     hist_demands = {}
     try:
-        with open(filepath, mode='r', encoding='utf-8') as f:
+        with open(filepath, mode="r", encoding="utf-8") as f:
             reader = csv.reader(f)
-            header = next(reader) # Προσπέραση του header
+            header = next(reader)
+            dates = [(int(col[:4]), int(col[5:7])) for col in header[1:]]
             for row in reader:
                 plant = row[0]
-                # Αν η τιμή είναι κενή (π.χ. στο catharanthus), την κάνουμε 0.0
-                values = [float(v) if v.strip() else 0.0 for v in row[1:]]
-                
-                # Χωρισμός των 144 μηνών σε 12 λίστες (μία για κάθε έτος)
-                plant_years = [values[i*12 : (i+1)*12] for i in range(12)]
-                hist_demands[plant] = plant_years
+                by_year: dict[int, dict[int, float]] = {}
+                for (year, month), value in zip(dates, row[1:]):
+                    # An empty value (e.g. catharanthus) counts as 0.0
+                    by_year.setdefault(year, {})[month] = float(value) if value.strip() else 0.0
+                hist_demands[plant] = [
+                    [months[m] for m in range(1, 13)]
+                    for year, months in sorted(by_year.items())
+                    if len(months) == 12
+                ]
     except Exception as e:
-        print(f"Προειδοποίηση: Δεν βρέθηκε το {filepath} ή υπήρξε σφάλμα ({e}).")
+        print(f"Warning: could not read {filepath} ({e}).")
     return hist_demands
 
 
@@ -181,6 +189,8 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
     demand_csv = _updated_demand_csv(plants)
     climates = inputs.read_climates()
     region = region or next(iter(climates))
+    if region not in climates:
+        raise BadRequest(f"unknown region: {region}")
     
     monthly_temp = climates[region]["monthly"]
     seasons = inputs.read_seasons()
@@ -191,14 +201,17 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
     sim_opt = simulation.simulate(areas_opt, plants, demand, seasons, monthly_temp, strategy="equal")
 
     # 2. NAIVE PLAN
-    areas_naive = {}
-    left = constraints["land"]
-    ranked = sorted(plants, key=lambda p: plants[p]["weight"] * plants[p]["yield_kg"], reverse=True)
-    for p in ranked:
-        needed = sum(demand[p]) / plants[p]["yield_kg"] if plants[p]["yield_kg"] > 0 else 0.0
-        allocated = min(needed, left)
-        areas_naive[p] = allocated
-        left -= allocated
+    # Naive plan: what a planner without an optimizer would do. Each plant gets the land its
+    # annual demand needs (demand / yield); if the land is short, every plant is cut by the same
+    # share. (Ranking plants by weight x yield and filling the land in that order is not naive:
+    # with land as the only limit it is exactly the optimizer's solution.)
+    needed = {
+        p: sum(demand[p]) / plants[p]["yield_kg"] if plants[p]["yield_kg"] > 0 else 0.0
+        for p in plants
+    }
+    total_needed = sum(needed.values())
+    share = min(1.0, constraints["land"] / total_needed) if total_needed > 0 else 0.0
+    areas_naive = {p: needed[p] * share for p in plants}
     sim_naive = simulation.simulate(areas_naive, plants, demand, seasons, monthly_temp, strategy="naive")
 
     # 3. EQUAL ALLOCATION
@@ -215,15 +228,20 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
         areas_prop = {p: 0.0 for p in plants}
     sim_prop = simulation.simulate(areas_prop, plants, demand, seasons, monthly_temp, strategy="equal")
     
-    plants_drought = copy.deepcopy(plants)
-    for p in plants_drought:
-        plants_drought[p]["yield_kg"] *= 0.75
-        
-    # 5. DROUGHT
-    sim_unexpected = simulation.simulate(areas_opt, plants_drought, demand, seasons, monthly_temp, strategy="equal")
-    lp_anticipated = optimizer.solve(plants_drought, _updated_demand_csv(plants_drought), demand, constraints)
+    # 5. DROUGHT, the same rule as crop_opt: every year, harvests of crops that were growing in any
+    # month from drought_start to drought_end (constraints.csv, 0 = January) keep only `drought`
+    # of their yield. Other harvests are not affected.
+    drought = simulation.Drought(
+        factor=constraints.get("drought", 0.75),
+        start=int(constraints.get("drought_start", 5)),
+        end=int(constraints.get("drought_end", 8)),
+    )
+    # Unexpected: the normal optimized plan, hit by the drought.
+    sim_unexpected = simulation.simulate(areas_opt, plants, demand, seasons, monthly_temp, strategy="equal", drought=drought)
+    # Anticipated: crop_opt plans knowing the drought will come.
+    lp_anticipated = optimizer.solve(plants, demand_csv, demand, constraints, drought_fctr=drought.factor)
     areas_anticipated = {p: res["area"] for p, res in lp_anticipated["plants"].items()}
-    sim_anticipated = simulation.simulate(areas_anticipated, plants_drought, demand, seasons, monthly_temp, strategy="equal")
+    sim_anticipated = simulation.simulate(areas_anticipated, plants, demand, seasons, monthly_temp, strategy="equal", drought=drought)
     
     # 6. STOCHASTIC
     scenarios = [
@@ -273,7 +291,7 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
     expected_cov_perfect = sum(v["perfect_info_coverage"] * v["prob"] for v in stochastic_eval.values())
     
     # 7. Back-testing
-    random.seed(42) # Διατηρούμε το seed για σταθερή προσομοίωση απόδοσης/καιρού
+    random.seed(42) # fixed seed, so the yield multipliers are the same on every run
     
     historical_demands = _read_historical_demand()
     
@@ -286,7 +304,10 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
         "Proportional Allocation": []
     }
 
-    for year_idx in range(12):
+    # One replay per complete calendar year in the history file. A plant with no full
+    # year (catharanthus has no history) gets zero demand below.
+    n_years = max((len(years) for years in historical_demands.values()), default=0)
+    for year_idx in range(n_years):
         y_m = random.uniform(0.7, 1.1)
         hist_plants = copy.deepcopy(plants)
         for p in hist_plants:
@@ -326,7 +347,7 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
         sim_prop_hist = simulation.simulate(areas_prop, hist_plants, hist_demand, seasons, monthly_temp, strategy="equal")
         backtest_raw["Proportional Allocation"].append(sim_prop_hist["by_year"][2]["coverage"])
 
-    # Συγκέντρωση των τελικών στατιστικών (Mean & Min Coverage)
+    # Mean and minimum coverage for each strategy
     backtest_results = []
     for strategy, coverages in backtest_raw.items():
         backtest_results.append({

@@ -98,7 +98,9 @@ export const Field: React.FC<FieldProps> = ({
 
     const stepsPerMonth = simulationData.steps_per_month || 4; 
     const absoluteMonth = (selectedYear - 1) * 12 + currentMonth; 
-    const stepToRead = absoluteMonth * stepsPerMonth; 
+    // Show the field as it is in the last week of the month, so crops sown during the month
+    // appear as planted (crops harvested during the month already show as cleared).
+    const stepToRead = absoluteMonth * stepsPerMonth + stepsPerMonth - 1; 
 
     const rawCrops: any[] = [];
     Object.keys(simulationData.parcels).forEach((name) => {
@@ -430,7 +432,7 @@ export const Field: React.FC<FieldProps> = ({
                 />
 
                 <p className="mt-4 text-xs text-slate-400 leading-relaxed">
-                  Starting from an empty field, the simulations's {Math.round(simulationData.by_year[simulationData.by_year.length - 1].coverage * 1000) / 10}% coverage is achieved in year {simulationData.by_year.length}.
+                  Starting from an empty field, the simulation's {Math.round(simulationData.by_year[simulationData.by_year.length - 1].coverage * 1000) / 10}% coverage is achieved in year {simulationData.by_year.length}.
                 </p>
               </div>
             )}

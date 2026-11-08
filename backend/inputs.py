@@ -10,7 +10,7 @@ import csv
 import os
 from pathlib import Path
 
-from simulation import Season
+from simulation import DEFAULT_SEASON, Season
 
 BACKEND_DIR = Path(__file__).resolve().parent
 CROP_OPT_DIR = Path(os.environ.get("CROP_OPT_DIR", BACKEND_DIR.parent / "crop_opt")).resolve()
@@ -46,13 +46,30 @@ def read_demand() -> dict[str, list[float]]:
 
 
 def read_constraints() -> dict[str, float]:
-    """constraints.csv as {column: number}. Only `land` is used today."""
+    """constraints.csv as {column: number}: `land`, plus the drought scenario's `drought` (yield
+    factor), `drought_start` and `drought_end` (months, 0 = January)."""
     row = _rows(CROP_OPT_DIR / "constraints.csv")[0]
     return {key: float(value) for key, value in row.items()}
 
 
 def read_seasons() -> dict[str, Season]:
-    return {}
+    """Sowing windows from data.csv, so the simulation sows in the same months as the optimizer.
+
+    data.csv counts months from 0 (0 = January) while Season counts from 1, hence the +1.
+    The temperature response is not in data.csv, so it keeps the default values.
+    """
+    seasons = {}
+    for name, plant in read_plants().items():
+        if "sown_from" in plant and "sown_to" in plant:
+            seasons[name] = Season(
+                sow_from=int(plant["sown_from"]) + 1,
+                sow_to=int(plant["sown_to"]) + 1,
+                t_base=DEFAULT_SEASON.t_base,
+                t_opt_low=DEFAULT_SEASON.t_opt_low,
+                t_opt_high=DEFAULT_SEASON.t_opt_high,
+                t_max=DEFAULT_SEASON.t_max,
+            )
+    return seasons
 
 def read_season_sources() -> dict[str, dict]:
     return {}
@@ -63,10 +80,10 @@ def read_plant_info() -> dict[str, dict]:
 def read_climates() -> dict[str, dict]:
     return {
         "angers": {
-            "label_el": " ",
+            "label_el": "Γαλλία, Angers",
             "label_en": "France, Angers",
             "monthly": [6.0, 6.4, 9.0, 11.3, 14.7, 18.1, 20.0, 20.1, 16.9, 13.4, 9.1, 6.3],
-            "source": "M o-France 1991-2020 normals for Beaucouz , via Wikipedia",
+            "source": "Météo-France 1991-2020 normals for Beaucouzé, via Wikipedia",
             "url": "https://en.wikipedia.org/wiki/Beaucouz%C3%A9"
         }
     }

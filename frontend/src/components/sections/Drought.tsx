@@ -1,6 +1,7 @@
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { Divider } from '@/components/tremor/Divider';
 import { ProgressCircle } from '@/components/tremor/ProgressCircle';
+import { ResultsPlaceholder } from '@/components/ResultsPlaceholder';
 
 export interface DroughtData {
   unexpected: number;
@@ -9,14 +10,11 @@ export interface DroughtData {
 
 interface DroughtProps {
   droughtData?: DroughtData;
+  // true when the server could not be reached
+  failed?: boolean;
 }
 
-export function Drought({ droughtData }: DroughtProps) {
-  const unexpectedVal = (droughtData?.unexpected ?? 0.758) * 100;
-  const anticipatedVal = (droughtData?.anticipated ?? 0.834) * 100;
-  
-  const coverageDrop = Math.max(0, anticipatedVal - unexpectedVal);
-
+export function Drought({ droughtData, failed = false }: DroughtProps) {
   return (
     <AnimatedSection>
       {/* Left Column */}
@@ -37,6 +35,22 @@ export function Drought({ droughtData }: DroughtProps) {
       </div>
 
       {/* Right Column */}
+      {droughtData ? (
+        <DroughtResults droughtData={droughtData} />
+      ) : (
+        <ResultsPlaceholder failed={failed} className="lg:col-span-7" />
+      )}
+    </AnimatedSection>
+  );
+}
+
+function DroughtResults({ droughtData }: { droughtData: DroughtData }) {
+  const unexpectedVal = droughtData.unexpected * 100;
+  const anticipatedVal = droughtData.anticipated * 100;
+  
+  const coverageDrop = Math.max(0, anticipatedVal - unexpectedVal);
+
+  return (
       <div className="lg:col-span-7 bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col justify-center gap-10 shadow-xl ring-1 ring-slate-200 dark:ring-white/10">
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400 text-center">
           Visualizing the <strong className="text-slate-900 dark:text-slate-50"><span className="font-mono tabular-nums">{coverageDrop.toFixed(1)}%</span> demand coverage drop</strong> when drought occurs unexpectedly vs when anticipated.
@@ -67,7 +81,6 @@ export function Drought({ droughtData }: DroughtProps) {
           </div>
         </div>
       </div>
-    </AnimatedSection>
   );
 }
 
