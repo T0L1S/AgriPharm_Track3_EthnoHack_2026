@@ -21,8 +21,11 @@ export function Hero() {
         </span>
       </h1>
 
-      <p className="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
-        AgriPharm combines predictive market demand with stochastic optimization to reliably meet pharmaceutical demand.
+      <p className="mt-8 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-normal leading-relaxed">
+        If demand for plant-derived medicines rises next year, how should we adapt today?
+      </p>
+      <p className="mt-8 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto font-normal leading-relaxed">
+        Plants take time to grow, land is limited, and medicine quantities must first be translated into plant material. AgriPharm orchestrates this entire supply chain using stochastic optimization to reliably meet pharmaceutical demand
       </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm font-medium text-slate-500 dark:text-slate-400">

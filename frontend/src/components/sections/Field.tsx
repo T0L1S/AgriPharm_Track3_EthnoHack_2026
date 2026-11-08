@@ -42,6 +42,20 @@ const PLANT_SPECIES_MAPPING: Record<string, string> = {
   'plantago_ovata_husk': 'Plantago ovata'
 };
 
+function roundToTotal(values: number[], total: number): number[] {
+  const floors = values.map((v) => Math.floor(v));
+  let remaining = total - floors.reduce((acc, v) => acc + v, 0);
+  const order = values
+    .map((v, i) => ({ i, remainder: v - Math.floor(v) }))
+    .sort((a, b) => b.remainder - a.remainder);
+  for (const { i } of order) {
+    if (remaining <= 0) break;
+    floors[i] += 1;
+    remaining -= 1;
+  }
+  return floors;
+}
+
 export const Field: React.FC<FieldProps> = ({ 
   simulationData, 
   plantsConfig,
@@ -53,7 +67,7 @@ export const Field: React.FC<FieldProps> = ({
   isLoading = false 
 }) => {
   const [currentMonth, setCurrentMonth] = useState<number>(3);
-  const [selectedYear, setSelectedYear] = useState<number>(3);
+  const [selectedYear, setSelectedYear] = useState<number>(2);
   const [isWeightsExpanded, setIsWeightsExpanded] = useState<boolean>(false);
   
   const [localLand, setLocalLand] = useState<number>(currentLand);
@@ -87,48 +101,41 @@ export const Field: React.FC<FieldProps> = ({
     const stepToRead = absoluteMonth * stepsPerMonth; 
 
     const rawCrops: any[] = [];
-    const parcelKeys = Object.keys(simulationData.parcels);
-    
-    if (parcelKeys.length === 0) return [];
-
-    let fieldSize = 0;
-    parcelKeys.forEach(key => {
-        const arr = simulationData.parcels[key]?.cells?.[stepToRead];
-        if (arr && arr.length > fieldSize) {
-            fieldSize = arr.length;
-        }
-    });
-    if (fieldSize === 0) fieldSize = 100;
-
-    let totalRawActive = 0;
-    
-    parcelKeys.forEach((name) => {
-      const cells = simulationData.parcels[name]?.cells?.[stepToRead];
+    Object.keys(simulationData.parcels).forEach((name) => {
+      const parcel = simulationData.parcels[name];
+      const cells = parcel?.cells?.[stepToRead];
       if (cells && Array.isArray(cells)) {
-        const activeApiTiles = cells.filter((val: number) => val !== -1 && val !== 0).length;
-        
-        if (activeApiTiles > 0) {
+        const plantedSquares = cells.filter((val: number) => val >= 0).length;
+        const area = plantedSquares * (parcel.square_area ?? 0);
+        if (area > 0) {
           const colors = CROP_COLORS[name] || { bg: 'bg-blue-500', text: 'text-blue-400' };
-          rawCrops.push({ name, activeApiTiles, color: colors.bg, textColor: colors.text });
-          totalRawActive += activeApiTiles;
+          rawCrops.push({ name, area, color: colors.bg, textColor: colors.text });
         }
       }
     });
 
-    const scaleFactor = totalRawActive > fieldSize ? (fieldSize / totalRawActive) : 1;
+    if (rawCrops.length === 0 || currentLand <= 0) return [];
 
-    const currentCrops = rawCrops.map(crop => {
-      const normalizedTiles = crop.activeApiTiles * scaleFactor;
-      const ratio = normalizedTiles / fieldSize;
-      
-      return {
-        name: crop.name,
-        visualTiles: Math.round(ratio * 100), 
-        stremmas: Math.round(ratio * currentLand), 
-        color: crop.color,
-        textColor: crop.textColor
-      };
+    const occupiedShare = Math.min(1, rawCrops.reduce((acc, c) => acc + c.area, 0) / currentLand);
+    const tiles = roundToTotal(rawCrops.map(c => (c.area / currentLand) * 100), Math.round(occupiedShare * 100));
+
+    rawCrops.forEach((_, i) => {
+      if (tiles[i] === 0) {
+        const largest = tiles.indexOf(Math.max(...tiles));
+        if (tiles[largest] > 1) {
+          tiles[largest] -= 1;
+          tiles[i] = 1;
+        }
+      }
     });
+
+    const currentCrops = rawCrops.map((crop, i) => ({
+      name: crop.name,
+      visualTiles: tiles[i],
+      stremmas: crop.area,
+      color: crop.color,
+      textColor: crop.textColor
+    }));
 
     return currentCrops;
   }, [simulationData, currentMonth, selectedYear, currentLand]);
@@ -222,7 +229,19 @@ export const Field: React.FC<FieldProps> = ({
           <div className="space-y-3 bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800/60 w-full h-full flex flex-col justify-center">
             <div className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-300 font-medium">
               <div className="flex items-center gap-2">
-                <span>Available Land (stremmata)</span>
+                
+                <div className="group relative flex items-center gap-1.5 cursor-help">
+                  <span>Available Land (stremmata)</span>
+                  <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">ⓘ</span>
+                  
+                  <div className="pointer-events-none absolute bottom-full left-0 mb-2 w-56 opacity-0 transition-opacity group-hover:opacity-100 z-50 bg-slate-900 dark:bg-slate-100 text-slate-200 dark:text-slate-800 text-xs rounded-lg p-3 shadow-xl border border-slate-700 dark:border-slate-300 font-normal leading-relaxed">
+                    <strong className="text-white dark:text-black block mb-1">What is a stremma?</strong>
+                    A Greek unit of land area equal to:<br />
+                    • 1,000 m² (0.1 hectares)<br />
+                    • ~0.247 acres (approx. 1/4 acre)
+                  </div>
+                </div>
+
                 {(localLand !== currentLand || isLoading) && (
                   <span className="text-xs text-amber-600 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-md font-semibold">
                     Results shown for {currentLand} stremmata
@@ -307,7 +326,7 @@ export const Field: React.FC<FieldProps> = ({
 
         <div className="mb-8 px-1">
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
+            <div className="flex items-center justify-between text-sm font-medium text-slate-500 dark:text-slate-400">
               <span>Crop calendar: pick a month</span>
               <Badge variant="success">{MONTH_NAMES[currentMonth]}</Badge>
             </div>
@@ -377,7 +396,7 @@ export const Field: React.FC<FieldProps> = ({
                       </span>
                     </div>
                     <span className={`font-mono text-xs font-semibold tabular-nums ${crop.textColor}`}>
-                      {crop.stremmas} stremmata
+                      {crop.stremmas.toFixed(1)} stremmata
                     </span>
                   </div>
                 ))}
@@ -387,7 +406,7 @@ export const Field: React.FC<FieldProps> = ({
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Fallow / Available</span>
                   </div>
                   <span className="font-mono text-xs text-slate-500 tabular-nums font-medium">
-                    {fallowStremmas} stremmata
+                    {fallowStremmas.toFixed(1)} stremmata
                   </span>
                 </div>
               </div>
