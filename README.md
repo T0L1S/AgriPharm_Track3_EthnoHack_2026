@@ -9,7 +9,7 @@
 
 ## 📌 Quick Links & Resources
 * **Live Web Platform:** [agripharm2026.netlify.app](https://agripharm2026.netlify.app/)
-* **Devpost Submission:** [EthnoHack 2026 Project Page](https://ethnohack2026.devpost.com/)
+* **Devpost Submission:** [EthnoHack 2026 Project Page](https://devpost.com/software/agripharm)
 * **GitHub Repository:** [T0L1S/AgriPharm_Track3_EthnoHack_2026](https://github.com/T0L1S/AgriPharm_Track3_EthnoHack_2026)
 * **Module docs:** [Forecasting](src/agripharm_track3_ethnohack_2026/forecasting/forecasting_documentation.md) · [Drug-to-plant data](EthnoHackData/README.md) · [Optimizer](crop_opt/README.md) · [Web client & API](frontend/README.md)
 
