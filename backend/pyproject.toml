@@ -9,6 +9,7 @@ dependencies = [
     "pulp[cbc]>=4.2.0",
     "crop-opt",
     "gunicorn>=26.2.0",
+    "flask-cors>=6.0.5",
 ]
 
 [dependency-groups]
