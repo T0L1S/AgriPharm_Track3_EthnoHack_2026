@@ -29,10 +29,10 @@ export function PlanComparison({ comparisonData }: PlanComparisonProps) {
   const naiveCoverage = (comparisonData?.naive?.coverage ?? 0.687) * 100;
 
   const dynamicChart3Data = comparisonData ? [
-    { name: 'Naïve Plan', value: comparisonData.naive.unused_inventory * 100 },
+    { name: 'Naïve Plan', value: comparisonData.naive.unused_inventory * 100, highlight: true },
     { name: 'Equal Allocation', value: comparisonData.equal.unused_inventory * 100 },
     { name: 'Proportional Allocation', value: comparisonData.proportional.unused_inventory * 100 },
-    { name: 'Optimized', value: comparisonData.optimized.unused_inventory * 100 },
+    { name: 'Optimized', value: comparisonData.optimized.unused_inventory * 100, highlight: true },
   ].sort((a, b) => b.value - a.value) : chart3Data;
 
   return (

@@ -22,13 +22,26 @@ import { Field } from '@/components/sections/Field';
 
 import './App.css';
 
+const REPO_URL = 'https://github.com/T0L1S/AgriPharm_Track3_EthnoHack_2026';
+const TEAM = ['Apostolos Bilas', 'Diogenis Siganos', 'Panagiotis Mouroukos', 'Christos Paterakis'];
+
+const NAV_LINKS = [
+  { href: '#forecast', label: 'Forecast' },
+  { href: '#planner', label: 'Planner' },
+  { href: '#comparison', label: 'Comparison' },
+  { href: '#drought', label: 'Drought' },
+  { href: '#stress-tests', label: 'Stress tests' },
+];
+
+const linkStyle = "underline decoration-slate-300 underline-offset-2 hover:text-slate-900 dark:decoration-slate-600 dark:hover:text-slate-100";
+
 function App() {
   const [config, setConfig] = useState<any>(null);
   const [sweepData, setSweepData] = useState<any>(null);
   const [runData, setRunData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [currentLand, setCurrentLand] = useState<number>(500);
+  const [currentLand, setCurrentLand] = useState<number>(400);
   const [currentWeights, setCurrentWeights] = useState<Record<string, number>>({});
 
   const [isRunning, setIsRunning] = useState(false);
@@ -182,14 +195,22 @@ function App() {
   return (
     <main className="min-h-screen p-6 sm:p-8 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-50">
       <header className="sticky top-0 z-50 w-full border-b border-gray-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-950/75 backdrop-blur-md transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          <a href="#top" className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Agri<span className="lora-font">Pharm</span>
-          </h1>
+          </a>
+
+          <nav aria-label="Sections" className="hidden md:flex items-center gap-5 text-sm font-medium text-slate-600 dark:text-slate-400">
+            {NAV_LINKS.map(link => (
+              <a key={link.href} href={link.href} className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                {link.label}
+              </a>
+            ))}
+          </nav>
 
           <div className="flex items-center gap-3">
             <a
-              href="https://github.com/T0L1S/AgriPharm_Track3_EthnoHack_2026"
+              href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub Repository"
@@ -209,12 +230,16 @@ function App() {
         </div>
       </header>
 
+      <div id="top" />
       <Hero />
 
       <Card className="sm:mx-auto max-w-7xl p-6 sm:p-10">
         <div className="space-y-24">
-          <MLForecast />
+          <div id="forecast" className="scroll-mt-24">
+            <MLForecast />
+          </div>
 
+          <div id="planner" className="scroll-mt-24">
           {error ? (
             <div className="flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 text-center min-h-[300px]">
               <div className="p-3 bg-red-100 dark:bg-red-900/50 rounded-full mb-4">
@@ -255,11 +280,16 @@ function App() {
               isLoading={isRunning}
             />
           ) : null}
+          </div>
 
-          <PlanComparison comparisonData={runData?.comparison} />
-          <Drought droughtData={runData?.drought_test} />
+          <div id="comparison" className="scroll-mt-24">
+            <PlanComparison comparisonData={runData?.comparison} />
+          </div>
+          <div id="drought" className="scroll-mt-24">
+            <Drought droughtData={runData?.drought_test} />
+          </div>
           
-          <div className="pt-10 border-t border-gray-200 dark:border-slate-800/80">
+          <div id="stress-tests" className="scroll-mt-24 pt-10 border-t border-gray-200 dark:border-slate-800/80">
             <div className="mb-6">
               <h3 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                 Extended Model Verification & Stress Tests
@@ -317,6 +347,36 @@ function App() {
           </div>
         </div>
       </Card>
+
+      <footer className="max-w-7xl mx-auto mt-10 px-1 sm:px-0 py-8 border-t border-gray-200 dark:border-slate-800/80 grid gap-8 sm:grid-cols-3 text-sm text-slate-600 dark:text-slate-400">
+        <div>
+          <p className="text-base font-bold text-slate-900 dark:text-slate-100">
+            Agri<span className="lora-font">Pharm</span>
+          </p>
+          <p className="mt-2">Built for EthnoHack 2026, Track 3: Biodiversity.</p>
+          <p className="mt-2">Team: {TEAM.join(', ')}.</p>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-900 dark:text-slate-100">Data</p>
+          <ul className="mt-2 space-y-1.5">
+            <li>
+              <a className={linkStyle} href="https://www.assurance-maladie.ameli.fr/etudes-et-donnees/medicaments-classe-atc-medicam" target="_blank" rel="noopener noreferrer">Médic'AM, Assurance Maladie</a> (Licence Ouverte)
+            </li>
+            <li>
+              <a className={linkStyle} href={`${REPO_URL}/blob/main/EthnoHackData/docs/SOURCES.md`} target="_blank" rel="noopener noreferrer">Pack and plant references</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-900 dark:text-slate-100">Code and documentation</p>
+          <ul className="mt-2 space-y-1.5">
+            <li><a className={linkStyle} href={REPO_URL} target="_blank" rel="noopener noreferrer">GitHub repository</a></li>
+            <li><a className={linkStyle} href={`${REPO_URL}/blob/main/src/agripharm_track3_ethnohack_2026/forecasting/forecasting_documentation.md`} target="_blank" rel="noopener noreferrer">Demand forecasting</a></li>
+            <li><a className={linkStyle} href={`${REPO_URL}/blob/main/EthnoHackData/docs/METHODOLOGY.md`} target="_blank" rel="noopener noreferrer">Drug-to-plant conversion</a></li>
+            <li><a className={linkStyle} href={`${REPO_URL}/blob/main/crop_opt/README.md`} target="_blank" rel="noopener noreferrer">Optimizer formulation</a></li>
+          </ul>
+        </div>
+      </footer>
     </main>
   );
 }
