@@ -9,6 +9,8 @@ type Bar<T> = T & {
   href?: string
   value: number
   name: string
+  // Draws a darker outline around this bar to set it apart from the rest
+  highlight?: boolean
 }
 
 interface BarListProps<T = unknown>
@@ -95,6 +97,10 @@ function BarListInner<T>(
                   "mb-0": index === sortedData.length - 1,
                   "duration-800": showAnimation,
                 },
+                // optional highlight
+                item.highlight
+                  ? "ring-2 ring-inset ring-blue-500/80 dark:ring-blue-400/80"
+                  : "",
               )}
               style={{ width: `${widths[index]}%` }}
             >

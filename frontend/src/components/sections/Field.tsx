@@ -305,6 +305,49 @@ export const Field: React.FC<FieldProps> = ({
           </div>
         </div>
 
+        <div className="mb-8 px-1">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
+              <span>Crop calendar: pick a month</span>
+              <Badge variant="success">{MONTH_NAMES[currentMonth]}</Badge>
+            </div>
+
+            <div className="pt-2 pb-2">
+              <Slider
+                value={[currentMonth]}
+                onValueChange={(val: number[]) => {
+                  setCurrentMonth(val[0]);
+                }}
+                min={0}
+                max={11}
+                step={1}
+                aria-label="Simulation Month Selector"
+                className="w-full relative z-10"
+              />
+
+              <div className="relative w-full h-6 mt-3">
+                {MONTH_NAMES.map((m, idx) => (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-label={m}
+                    onClick={() => setCurrentMonth(idx)}
+                    className={`absolute top-0 -translate-x-1/2 text-[11px] font-mono min-w-4 sm:min-w-8 flex justify-center cursor-pointer transition-colors focus:outline-none ${
+                      currentMonth === idx 
+                        ? 'text-emerald-700 dark:text-emerald-400 font-bold scale-125' 
+                        : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    }`}
+                    style={{ left: `${(idx / 11) * 100}%` }}
+                  >
+                    <span className="sm:hidden">{m.slice(0, 1)}</span>
+                    <span className="hidden sm:inline">{m.slice(0, 3)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           <div className="lg:col-span-7 bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800/70 shadow-inner flex justify-center">
@@ -375,48 +418,6 @@ export const Field: React.FC<FieldProps> = ({
           </div>
         </div>
 
-        <Divider></Divider>
-
-        <div className="mt-6 px-1">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-              <span>Crop Calendar Timeline</span>
-              <Badge variant="success">{MONTH_NAMES[currentMonth]}</Badge>
-            </div>
-
-            <div className="pt-2 pb-6">
-              <Slider
-                value={[currentMonth]}
-                onValueChange={(val: number[]) => {
-                  setCurrentMonth(val[0]);
-                }}
-                min={0}
-                max={11}
-                step={1}
-                aria-label="Simulation Month Selector"
-                className="w-full relative z-10"
-              />
-
-              <div className="relative w-full h-6 mt-3">
-                {MONTH_NAMES.map((m, idx) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setCurrentMonth(idx)}
-                    className={`absolute top-0 -translate-x-1/2 text-[11px] font-mono min-w-8 flex justify-center cursor-pointer transition-colors focus:outline-none ${
-                      currentMonth === idx 
-                        ? 'text-emerald-500 dark:text-emerald-400 font-bold scale-125' 
-                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
-                    }`}
-                    style={{ left: `${(idx / 11) * 100}%` }}
-                  >
-                    {m.slice(0, 3)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </motion.div>
   );
