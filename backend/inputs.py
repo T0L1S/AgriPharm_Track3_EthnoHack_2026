@@ -52,36 +52,22 @@ def read_constraints() -> dict[str, float]:
 
 
 def read_seasons() -> dict[str, Season]:
-    seasons = {}
-    for row in _rows(ASSUMPTIONS_DIR / "season.csv"):
-        seasons[row["plant"]] = Season(
-            sow_from=int(row["sow_from"]),
-            sow_to=int(row["sow_to"]),
-            t_base=float(row["t_base"]),
-            t_opt_low=float(row["t_opt_low"]),
-            t_opt_high=float(row["t_opt_high"]),
-            t_max=float(row["t_max"]),
-        )
-    return seasons
-
+    return {}
 
 def read_season_sources() -> dict[str, dict]:
-    keys = ("temperature_source", "temperature_url", "calendar_source", "calendar_url")
-    return {row["plant"]: {key: row[key] for key in keys} for row in _rows(ASSUMPTIONS_DIR / "season.csv")}
-
-
-def read_climates() -> dict[str, dict]:
-    climates = {}
-    for row in _rows(ASSUMPTIONS_DIR / "climate.csv"):
-        climates[row["region"]] = {
-            "label_el": row["label_el"],
-            "label_en": row["label_en"],
-            "monthly": [float(row[month]) for month in MONTHS],
-            "source": row["source"],
-            "url": row["url"],
-        }
-    return climates
-
+    return {}
 
 def read_plant_info() -> dict[str, dict]:
-    return {row["plant"]: row for row in _rows(ASSUMPTIONS_DIR / "plant_info.csv")}
+    return {}
+
+def read_climates() -> dict[str, dict]:
+    return {
+        "angers": {
+            "label_el": " ",
+            "label_en": "France, Angers",
+            "monthly": [6.0, 6.4, 9.0, 11.3, 14.7, 18.1, 20.0, 20.1, 16.9, 13.4, 9.1, 6.3],
+            "source": "M o-France 1991-2020 normals for Beaucouz , via Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Beaucouz%C3%A9"
+        }
+    }
+

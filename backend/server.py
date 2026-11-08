@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+import random
 import copy
 import math
 import os
@@ -36,7 +38,7 @@ def _number(value, name: str, low: float, high: float) -> float:
 
 
 def _plants_with_weights(body: dict) -> dict[str, dict]:
-    """data.csv with the page's priority weights written over the weight column."""
+    """Updates the python dictionary with the page's priority weights."""
     plants = inputs.read_plants()
     weights = body.get("weights") or {}
     if not isinstance(weights, dict):
@@ -60,6 +62,52 @@ def land_slider_top(plants: dict[str, dict], demand: dict[str, list[float]]) -> 
 
 def _demand_csv_text() -> str:
     return (inputs.CROP_OPT_DIR / "demand.csv").read_text(encoding="utf-8")
+
+
+def _updated_demand_csv(plants: dict[str, dict]) -> str:
+    """Dynamically splices updated weights and yields into the CSV string for the solver."""
+    text = _demand_csv_text()
+    lines = text.splitlines()
+    if not lines:
+        return text
+    
+    header = lines[0].split(",")
+    id_idx = header.index("id") if "id" in header else 0
+    w_idx = header.index("weight") if "weight" in header else -1
+    y_idx = header.index("yield_kg") if "yield_kg" in header else -1
+    
+    for i in range(1, len(lines)):
+        parts = lines[i].split(",")
+        if len(parts) > id_idx:
+            p_id = parts[id_idx]
+            if p_id in plants:
+                if w_idx != -1 and len(parts) > w_idx:
+                    parts[w_idx] = str(plants[p_id]["weight"])
+                if y_idx != -1 and len(parts) > y_idx:
+                    parts[y_idx] = str(plants[p_id]["yield_kg"])
+        lines[i] = ",".join(parts)
+        
+    return "\n".join(lines) + "\n"
+
+import csv
+
+def _read_historical_demand(filepath="assumptions/demand_last_12_years.csv") -> dict:
+    hist_demands = {}
+    try:
+        with open(filepath, mode='r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            header = next(reader) # Προσπέραση του header
+            for row in reader:
+                plant = row[0]
+                # Αν η τιμή είναι κενή (π.χ. στο catharanthus), την κάνουμε 0.0
+                values = [float(v) if v.strip() else 0.0 for v in row[1:]]
+                
+                # Χωρισμός των 144 μηνών σε 12 λίστες (μία για κάθε έτος)
+                plant_years = [values[i*12 : (i+1)*12] for i in range(12)]
+                hist_demands[plant] = plant_years
+    except Exception as e:
+        print(f"Προειδοποίηση: Δεν βρέθηκε το {filepath} ή υπήρξε σφάλμα ({e}).")
+    return hist_demands
 
 
 def rounded(value):
@@ -118,17 +166,19 @@ def describe_config() -> dict:
         "is_static": False,
     }
 
+
 def _calculate_unused_inventory_pct(sim_result: dict) -> float:
     unused_kg = sum(parcel["stock"][-1] for parcel in sim_result["parcels"].values())
     total_harvest = sum(sum(parcel["harvest"]) for parcel in sim_result["parcels"].values())
     return unused_kg / total_harvest if total_harvest > 0 else 0.0
+
 
 def run_plan(land: float, weights: dict, region: str | None) -> dict:
     constraints = inputs.read_constraints()
     constraints["land"] = _number(land if land is not None else constraints["land"], "land", 0, 1_000_000)
     plants = _plants_with_weights({"weights": weights})
     demand = inputs.read_demand()
-    demand_csv = _demand_csv_text()
+    demand_csv = _updated_demand_csv(plants)
     climates = inputs.read_climates()
     region = region or next(iter(climates))
     
@@ -169,13 +219,13 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
     for p in plants_drought:
         plants_drought[p]["yield_kg"] *= 0.75
         
-    #5. DROUGHT
+    # 5. DROUGHT
     sim_unexpected = simulation.simulate(areas_opt, plants_drought, demand, seasons, monthly_temp, strategy="equal")
-    lp_anticipated = optimizer.solve(plants_drought, demand_csv, demand, constraints)
+    lp_anticipated = optimizer.solve(plants_drought, _updated_demand_csv(plants_drought), demand, constraints)
     areas_anticipated = {p: res["area"] for p, res in lp_anticipated["plants"].items()}
     sim_anticipated = simulation.simulate(areas_anticipated, plants_drought, demand, seasons, monthly_temp, strategy="equal")
     
-    #6. STOCHASTIC
+    # 6. STOCHASTIC
     scenarios = [
         {"d_m": 0.85, "y_m": 0.75, "prob": 0.10},
         {"d_m": 0.85, "y_m": 1.00, "prob": 0.20},
@@ -185,7 +235,6 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
         {"d_m": 1.20, "y_m": 1.00, "prob": 0.10},
     ]
 
-    # Δημιουργία του Στοχαστικού (Robust) Πλάνου (Επίλυση Two-Stage LP)
     areas_robust = optimizer.solve_stochastic(plants, demand, constraints, scenarios)
 
     stochastic_eval = {}
@@ -196,22 +245,18 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
         prob = sc["prob"]
         label = f"D: x{d_m}, Y: x{y_m}"
         
-        # Προσαρμογή των φυτών και της ζήτησης στο εκάστοτε σενάριο
         sc_plants = copy.deepcopy(plants)
         for p in sc_plants:
             sc_plants[p]["yield_kg"] *= y_m
         sc_demand = {p: [val * d_m for val in vals] for p, vals in demand.items()}
         
-        # Α) Deterministic Plan (Αξιολόγηση του αρχικού πλάνου)
         sc_sim_det = simulation.simulate(areas_opt, sc_plants, sc_demand, seasons, monthly_temp, strategy="equal")
         det_cov = sc_sim_det["by_year"][2]["coverage"]
 
-        # Β) Stochastic Plan (Αξιολόγηση του robust πλάνου)
         sc_sim_rob = simulation.simulate(areas_robust, sc_plants, sc_demand, seasons, monthly_temp, strategy="equal")
         rob_cov = sc_sim_rob["by_year"][2]["coverage"]
         
-        # Γ) Perfect Information (Ο solver ξέρει ακριβώς τι θα συμβεί και προσαρμόζεται απόλυτα)
-        lp_perf = optimizer.solve(sc_plants, demand_csv, sc_demand, constraints)
+        lp_perf = optimizer.solve(sc_plants, _updated_demand_csv(sc_plants), sc_demand, constraints)
         areas_perf = {p: res["area"] for p, res in lp_perf["plants"].items()}
         sc_sim_perf = simulation.simulate(areas_perf, sc_plants, sc_demand, seasons, monthly_temp, strategy="equal")
         perf_cov = sc_sim_perf["by_year"][2]["coverage"]
@@ -223,10 +268,72 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
             "perfect_info_coverage": perf_cov
         }
 
-    # Υπολογισμός συνολικού Expected Coverage (σταθμισμένο)
     expected_cov_deterministic = sum(v["deterministic_plan_coverage"] * v["prob"] for v in stochastic_eval.values())
     expected_cov_stochastic = sum(v["stochastic_plan_coverage"] * v["prob"] for v in stochastic_eval.values())
     expected_cov_perfect = sum(v["perfect_info_coverage"] * v["prob"] for v in stochastic_eval.values())
+    
+    # 7. Back-testing
+    random.seed(42) # Διατηρούμε το seed για σταθερή προσομοίωση απόδοσης/καιρού
+    
+    historical_demands = _read_historical_demand()
+    
+    backtest_raw = {
+        "Hindsight": [],
+        "Optimization": [],
+        "Stochastic": [],
+        "Naïve": [],
+        "Equal Allocation": [],
+        "Proportional Allocation": []
+    }
+
+    for year_idx in range(12):
+        y_m = random.uniform(0.7, 1.1)
+        hist_plants = copy.deepcopy(plants)
+        for p in hist_plants:
+            hist_plants[p]["yield_kg"] *= y_m
+
+        hist_demand = {}
+        for p in plants:
+            if p in historical_demands and year_idx < len(historical_demands[p]):
+                year_data = historical_demands[p][year_idx]
+                
+                if len(year_data) < 12:
+                    year_data = year_data + [0.0] * (12 - len(year_data))
+                elif len(year_data) > 12:
+                    year_data = year_data[:12]
+                    
+                hist_demand[p] = year_data
+            else:
+                hist_demand[p] = [0.0] * 12
+
+        lp_hind = optimizer.solve(hist_plants, demand_csv, hist_demand, constraints)
+        areas_hind = {p: res["area"] for p, res in lp_hind["plants"].items()}
+        sim_hind = simulation.simulate(areas_hind, hist_plants, hist_demand, seasons, monthly_temp, strategy="equal")
+        backtest_raw["Hindsight"].append(sim_hind["by_year"][2]["coverage"])
+
+        sim_opt_hist = simulation.simulate(areas_opt, hist_plants, hist_demand, seasons, monthly_temp, strategy="equal")
+        backtest_raw["Optimization"].append(sim_opt_hist["by_year"][2]["coverage"])
+
+        sim_rob_hist = simulation.simulate(areas_robust, hist_plants, hist_demand, seasons, monthly_temp, strategy="equal")
+        backtest_raw["Stochastic"].append(sim_rob_hist["by_year"][2]["coverage"])
+
+        sim_naive_hist = simulation.simulate(areas_naive, hist_plants, hist_demand, seasons, monthly_temp, strategy="naive")
+        backtest_raw["Naïve"].append(sim_naive_hist["by_year"][2]["coverage"])
+
+        sim_eq_hist = simulation.simulate(areas_eq, hist_plants, hist_demand, seasons, monthly_temp, strategy="equal")
+        backtest_raw["Equal Allocation"].append(sim_eq_hist["by_year"][2]["coverage"])
+
+        sim_prop_hist = simulation.simulate(areas_prop, hist_plants, hist_demand, seasons, monthly_temp, strategy="equal")
+        backtest_raw["Proportional Allocation"].append(sim_prop_hist["by_year"][2]["coverage"])
+
+    # Συγκέντρωση των τελικών στατιστικών (Mean & Min Coverage)
+    backtest_results = []
+    for strategy, coverages in backtest_raw.items():
+        backtest_results.append({
+            "strategy": strategy,
+            "mean_coverage": sum(coverages) / len(coverages) if coverages else 0.0,
+            "min_coverage": min(coverages) if coverages else 0.0
+        })
     
     return rounded({
         "lp": lp_opt, 
@@ -261,7 +368,8 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
                 "stochastic": expected_cov_stochastic,
                 "perfect_information": expected_cov_perfect
             }
-        }
+        },
+        "back_testing": backtest_results
     })
 
 
@@ -269,10 +377,9 @@ def sweep_land(weights: dict) -> list[dict]:
     """Coverage across a range of land values, running both LP and simulation."""
     plants = _plants_with_weights({"weights": weights})
     demand = inputs.read_demand()
-    demand_csv = _demand_csv_text()
+    demand_csv = _updated_demand_csv(plants)
     constraints = inputs.read_constraints()
     
-    # 1. Φόρτωση δεδομένων για την προσομοίωση
     climates = inputs.read_climates()
     default_region = next(iter(climates))
     monthly_temp = climates[default_region]["monthly"]

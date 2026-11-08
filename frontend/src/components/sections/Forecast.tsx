@@ -44,47 +44,35 @@ export function MLForecast() {
     forecastData.reduce((acc, curr) => acc + curr["C01AA05"], 0),
   );
 
+  const containerStyle = "lg:col-span-7 bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col justify-center gap-10 shadow-xl ring-1 ring-slate-200 dark:ring-white/10";
+  const cardStyle = "p-6 flex flex-col gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm ring-1 ring-slate-200 dark:ring-white/10 rounded-xl transition-all hover:bg-white dark:hover:bg-slate-800";
+
   return (
     <AnimatedSection>
       {/* Left Column */}
       <div className="lg:col-span-5 flex flex-col gap-6">
         <div>
           <Divider>
-            <h3 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
-              AI Demand Forecasting
+            <h3 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              SARIMA Demand Forecast
             </h3>
           </Divider>
-          <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mt-2">
+          <p className="text-lg font-medium text-emerald-600 dark:text-emerald-400 mt-2">
             How do we accurately project pharmaceutical needs?
           </p>
         </div>
 
-        <div className="space-y-4 text-base leading-relaxed text-gray-600 dark:text-gray-400">
+        <div className="space-y-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
           <p>
             Accurate demand modeling is critical for realistic simulations. This
             section highlights our Machine Learning approach to projecting the
             exact volume of Active Pharmaceutical Ingredients (APIs) required
             over the next 12 months.
           </p>
-          <p>The prediction pipeline utilizes:</p>
-          <ul className="list-disc list-outside pl-6 space-y-2 marker:text-gray-400">
-            <li>
-              <strong className="text-gray-900 dark:text-gray-100">
-                Ameli Dataset:
-              </strong>{" "}
-              Analyzed 14 years of historical pharmaceutical dispensation
-              records (Jan 2012 - Jul 2026).
-            </li>
-            <li>
-              <strong className="text-gray-900 dark:text-gray-100">
-                SARIMA Algorithm:
-              </strong>{" "}
-              Implemented a Seasonal Autoregressive Integrated Moving Average
-              model to capture long-term trends and seasonal variations in API
-              demand.
-            </li>
+          <ul className="list-disc list-outside pl-6 space-y-2 marker:text-slate-400">
+            <li><strong className="text-slate-900 dark:text-slate-100">Medic'AM (Assurance Maladie):</strong> Analyzed 14 years of historical dispensation records.</li>
+            <li><strong className="text-slate-900 dark:text-slate-100">SARIMA Algorithm:</strong> Captured long-term trends and seasonal variations.</li>
           </ul>
-
           <div className="flex gap-2 mt-6 flex-wrap">
             <Badge>SARIMA Model</Badge>
             <Badge variant="success">14yr Historical Data</Badge>
@@ -94,56 +82,33 @@ export function MLForecast() {
       </div>
 
       {/* Right Column */}
-      <div className="lg:col-span-7 bg-white/40 dark:bg-gray-900/30 backdrop-blur-md border border-gray-200 dark:border-gray-800 rounded-2xl p-6 sm:p-8 flex flex-col justify-center gap-10 border-slate-800/80 bg-slate-900/40 shadow-xl ring-1 ring-black/5 dark:ring-white/5">
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400 text-center">
-          Visualizing the{" "}
-          <strong className="text-gray-900 dark:text-gray-50">
-            projected trajectory
-          </strong>{" "}
-          for top ATC5 codes between Aug 2026 - Jul 2027.
+      <div className={containerStyle}>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 text-center">
+          Visualizing the <strong className="text-slate-900 dark:text-slate-50">projected trajectory</strong> for top ATC5 codes.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-          {/* Top API Card */}
-          <Card className="p-6 border-l-4 border-l-blue-500 dark:border-l-blue-500/70 shadow-sm flex-1">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Highest Demand ({atcMapping['M04AC01'].name})
-            </p>
-            <div className="mt-2 flex items-baseline gap-x-2">
+          <Card className={`${cardStyle} border-l-4 border-l-blue-500`}>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Highest Demand ({atcMapping['M04AC01'].name})</p>
+            <div className="flex items-baseline gap-x-2">
               <span className="text-3xl font-bold text-blue-600 dark:text-blue-500 font-mono tabular-nums">
                 {(totalM04 / 1000000).toFixed(2)}M
               </span>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                boxes/yr
-              </span>
+              <span className="text-sm font-medium text-slate-500">boxes/yr</span>
             </div>
-            <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-              Total projected annual volume for the leading pharmaceutical
-              ingredient.
-            </p>
           </Card>
 
-          {/* 2nd Top API Card */}
-          <Card className="p-6 border-l-4 border-l-emerald-500 dark:border-l-emerald-500/70 shadow-sm flex-1">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              2nd Highest ({atcMapping['C01AA05'].name})
-            </p>
-            <div className="mt-2 flex items-baseline gap-x-2">
+          <Card className={`${cardStyle} border-l-4 border-l-emerald-500`}>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">2nd Highest ({atcMapping['C01AA05'].name})</p>
+            <div className="flex items-baseline gap-x-2">
               <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-500 font-mono tabular-nums">
                 {(totalC01 / 1000).toFixed(0)}k
               </span>
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                boxes/yr
-              </span>
+              <span className="text-sm font-medium text-slate-500">boxes/yr</span>
             </div>
-            <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-              Total projected annual volume for the secondary high-demand
-              ingredient.
-            </p>
           </Card>
         </div>
 
-        {/* Interactive Chart Section */}
         <div className="mt-2">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
