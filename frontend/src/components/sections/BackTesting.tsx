@@ -4,6 +4,7 @@ import { Divider } from '@/components/tremor/Divider';
 import { BarChart } from '@/components/tremor/BarChart';
 import { ProgressCircle } from '@/components/tremor/ProgressCircle';
 import { formatPercent } from '@/lib/formattingUtils';
+import { ResultsPlaceholder } from '@/components/ResultsPlaceholder';
 
 interface BackTestResult {
   strategy: string;
@@ -12,10 +13,12 @@ interface BackTestResult {
 }
 
 interface BackTestingProps {
-  data: BackTestResult[];
+  data?: BackTestResult[];
+  // true when the server could not be reached
+  failed?: boolean;
 }
 
-export function BackTesting({ data }: BackTestingProps) {
+export function BackTesting({ data, failed = false }: BackTestingProps) {
   const containerStyle = "lg:col-span-7 bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col justify-center shadow-xl ring-1 ring-slate-200 dark:ring-white/10";
   const cardBaseStyle = "p-6 flex flex-col sm:flex-row items-center gap-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-md ring-1 ring-slate-200 dark:ring-white/10 rounded-xl transition-all";
 
@@ -43,6 +46,7 @@ export function BackTesting({ data }: BackTestingProps) {
           <p>The system's performance is then compared to an ideal benchmark scenario <span className="italic">(hindsight)</span>, in which the actual demand and crop yield values are known from the beginning of each year.</p>
         </div>
 
+        {data && (
         <div className="flex flex-col gap-4">
           <Card className={`${cardBaseStyle} border-l-4 border-l-emerald-500`}>
             <div className="shrink-0">
@@ -72,8 +76,12 @@ export function BackTesting({ data }: BackTestingProps) {
             </div>
           </Card>
         </div>
+        )}
       </div>
 
+      {!data ? (
+        <ResultsPlaceholder failed={failed} className="lg:col-span-7" />
+      ) : (
       <div className={containerStyle}>
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-6">
           Contrasting average performance against worst-case scenarios.
@@ -90,6 +98,7 @@ export function BackTesting({ data }: BackTestingProps) {
           className="h-90"
         />
       </div>
+      )}
     </AnimatedSection>
   );
 }

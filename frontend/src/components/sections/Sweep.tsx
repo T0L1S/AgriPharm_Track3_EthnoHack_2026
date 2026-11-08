@@ -9,7 +9,7 @@ type SweepProps = {
 };
 
 export function Sweep({ data }: SweepProps) {
-  // Κοινή κλάση για το δεξί container
+  // Shared classes for the right-hand container
   const containerStyle = "lg:col-span-7 bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 sm:p-8 flex flex-col justify-center shadow-xl ring-1 ring-slate-200 dark:ring-white/10";
 
   return (

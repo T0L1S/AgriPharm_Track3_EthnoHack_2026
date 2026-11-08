@@ -3,8 +3,7 @@ import { Divider } from '@/components/tremor/Divider';
 import { BarList } from '@/components/tremor/BarList';
 import { ProgressCircle } from '@/components/tremor/ProgressCircle';
 import { getProgressVariant, formatPercent } from '@/lib/formattingUtils';
-
-import { chart3Data } from '@/data/chartData';
+import { ResultsPlaceholder } from '@/components/ResultsPlaceholder';
 
 export interface PlanMetrics {
   coverage: number;
@@ -20,20 +19,11 @@ export interface ComparisonData {
 
 interface PlanComparisonProps {
   comparisonData?: ComparisonData;
+  // true when the server could not be reached
+  failed?: boolean;
 }
 
-export function PlanComparison({ comparisonData }: PlanComparisonProps) {
-  const optCoverage = (comparisonData?.optimized?.coverage ?? 0.999) * 100;
-  const propCoverage = (comparisonData?.proportional?.coverage ?? 0.967) * 100;
-  const eqCoverage = (comparisonData?.equal?.coverage ?? 0.812) * 100;
-  const naiveCoverage = (comparisonData?.naive?.coverage ?? 0.687) * 100;
-
-  const dynamicChart3Data = comparisonData ? [
-    { name: 'Naïve Plan', value: comparisonData.naive.unused_inventory * 100, highlight: true },
-    { name: 'Equal Allocation', value: comparisonData.equal.unused_inventory * 100 },
-    { name: 'Proportional Allocation', value: comparisonData.proportional.unused_inventory * 100 },
-    { name: 'Optimized', value: comparisonData.optimized.unused_inventory * 100, highlight: true },
-  ].sort((a, b) => b.value - a.value) : chart3Data;
+export function PlanComparison({ comparisonData, failed = false }: PlanComparisonProps) {
 
   return (
     <AnimatedSection>
@@ -48,7 +38,7 @@ export function PlanComparison({ comparisonData }: PlanComparisonProps) {
            <p>This section compares four different strategies for planning the cultivation of plants needed for the production of plant-derived medicines. All plans are evaluated based on the same demand, using the same available arable land and the same storage capacity.</p>
             <p>4 approaches are examined:</p>
             <ul className="list-disc list-outside pl-6 space-y-2 marker:text-gray-400">
-            <li><strong>Naïve plan:</strong> A single sowing is carried out at the beginning of the available period, with the aim of meeting the entire annual demand.</li>
+            <li><strong>Naïve plan:</strong> Each plant gets the land it needs to cover its yearly demand, all sown at the start of its season. If there isn't enough land for everyone, every plant gets the same percentage cut.</li>
             <li><strong>Equal allocation:</strong> The available area is divided equally among the permitted sowing months, allowing the production to be spread more evenly throughout the year.</li>
             <li><strong>Proportional allocation:</strong> The cultivation plan optimized for the previous year's demand is applied in order to assess how well it meets the current year's needs.</li>
             <li><strong>Optimized plan:</strong> The best possible cultivation plan is determined based on the current year's demand and available resources.</li>
@@ -57,6 +47,29 @@ export function PlanComparison({ comparisonData }: PlanComparisonProps) {
       </div>
 
       {/* Right Column - Chart & KPI Cards */}
+      {comparisonData ? (
+        <ComparisonResults comparisonData={comparisonData} />
+      ) : (
+        <ResultsPlaceholder failed={failed} className="lg:col-span-7" />
+      )}
+    </AnimatedSection>
+  );
+}
+
+function ComparisonResults({ comparisonData }: { comparisonData: ComparisonData }) {
+  const optCoverage = comparisonData.optimized.coverage * 100;
+  const propCoverage = comparisonData.proportional.coverage * 100;
+  const eqCoverage = comparisonData.equal.coverage * 100;
+  const naiveCoverage = comparisonData.naive.coverage * 100;
+
+  const unusedInventoryData = [
+    { name: 'Naïve Plan', value: comparisonData.naive.unused_inventory * 100 },
+    { name: 'Equal Allocation', value: comparisonData.equal.unused_inventory * 100 },
+    { name: 'Proportional Allocation', value: comparisonData.proportional.unused_inventory * 100 },
+    { name: 'Optimized', value: comparisonData.optimized.unused_inventory * 100 },
+  ].sort((a, b) => b.value - a.value);
+
+  return (
       <div className="lg:col-span-7 bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-xl ring-1 ring-slate-200 dark:ring-white/10 flex flex-col gap-10">
         {/* Top: KPI Cards Grid */}
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Demand coverage at the end of year 3 across strategies.</p>
@@ -85,10 +98,9 @@ export function PlanComparison({ comparisonData }: PlanComparisonProps) {
 
         <div>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4">Ranking of strategies based on the percentage of unused inventory at the end of year 3.</p>
-          <BarList data={dynamicChart3Data} valueFormatter={formatPercent} className="mt-4" />
+          <BarList data={unusedInventoryData} valueFormatter={formatPercent} className="mt-4" />
         </div>
       </div>
-    </AnimatedSection>
   );
 }
 

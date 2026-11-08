@@ -189,6 +189,8 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
     demand_csv = _updated_demand_csv(plants)
     climates = inputs.read_climates()
     region = region or next(iter(climates))
+    if region not in climates:
+        raise BadRequest(f"unknown region: {region}")
     
     monthly_temp = climates[region]["monthly"]
     seasons = inputs.read_seasons()
@@ -199,14 +201,17 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
     sim_opt = simulation.simulate(areas_opt, plants, demand, seasons, monthly_temp, strategy="equal")
 
     # 2. NAIVE PLAN
-    areas_naive = {}
-    left = constraints["land"]
-    ranked = sorted(plants, key=lambda p: plants[p]["weight"] * plants[p]["yield_kg"], reverse=True)
-    for p in ranked:
-        needed = sum(demand[p]) / plants[p]["yield_kg"] if plants[p]["yield_kg"] > 0 else 0.0
-        allocated = min(needed, left)
-        areas_naive[p] = allocated
-        left -= allocated
+    # Naive plan: what a planner without an optimizer would do. Each plant gets the land its
+    # annual demand needs (demand / yield); if the land is short, every plant is cut by the same
+    # share. (Ranking plants by weight x yield and filling the land in that order is not naive:
+    # with land as the only limit it is exactly the optimizer's solution.)
+    needed = {
+        p: sum(demand[p]) / plants[p]["yield_kg"] if plants[p]["yield_kg"] > 0 else 0.0
+        for p in plants
+    }
+    total_needed = sum(needed.values())
+    share = min(1.0, constraints["land"] / total_needed) if total_needed > 0 else 0.0
+    areas_naive = {p: needed[p] * share for p in plants}
     sim_naive = simulation.simulate(areas_naive, plants, demand, seasons, monthly_temp, strategy="naive")
 
     # 3. EQUAL ALLOCATION
@@ -223,15 +228,20 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
         areas_prop = {p: 0.0 for p in plants}
     sim_prop = simulation.simulate(areas_prop, plants, demand, seasons, monthly_temp, strategy="equal")
     
-    plants_drought = copy.deepcopy(plants)
-    for p in plants_drought:
-        plants_drought[p]["yield_kg"] *= 0.75
-        
-    # 5. DROUGHT
-    sim_unexpected = simulation.simulate(areas_opt, plants_drought, demand, seasons, monthly_temp, strategy="equal")
-    lp_anticipated = optimizer.solve(plants_drought, _updated_demand_csv(plants_drought), demand, constraints)
+    # 5. DROUGHT, the same rule as crop_opt: every year, harvests of crops that were growing in any
+    # month from drought_start to drought_end (constraints.csv, 0 = January) keep only `drought`
+    # of their yield. Other harvests are not affected.
+    drought = simulation.Drought(
+        factor=constraints.get("drought", 0.75),
+        start=int(constraints.get("drought_start", 5)),
+        end=int(constraints.get("drought_end", 8)),
+    )
+    # Unexpected: the normal optimized plan, hit by the drought.
+    sim_unexpected = simulation.simulate(areas_opt, plants, demand, seasons, monthly_temp, strategy="equal", drought=drought)
+    # Anticipated: crop_opt plans knowing the drought will come.
+    lp_anticipated = optimizer.solve(plants, demand_csv, demand, constraints, drought_fctr=drought.factor)
     areas_anticipated = {p: res["area"] for p, res in lp_anticipated["plants"].items()}
-    sim_anticipated = simulation.simulate(areas_anticipated, plants_drought, demand, seasons, monthly_temp, strategy="equal")
+    sim_anticipated = simulation.simulate(areas_anticipated, plants, demand, seasons, monthly_temp, strategy="equal", drought=drought)
     
     # 6. STOCHASTIC
     scenarios = [
@@ -281,7 +291,7 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
     expected_cov_perfect = sum(v["perfect_info_coverage"] * v["prob"] for v in stochastic_eval.values())
     
     # 7. Back-testing
-    random.seed(42) # Διατηρούμε το seed για σταθερή προσομοίωση απόδοσης/καιρού
+    random.seed(42) # fixed seed, so the yield multipliers are the same on every run
     
     historical_demands = _read_historical_demand()
     
@@ -337,7 +347,7 @@ def run_plan(land: float, weights: dict, region: str | None) -> dict:
         sim_prop_hist = simulation.simulate(areas_prop, hist_plants, hist_demand, seasons, monthly_temp, strategy="equal")
         backtest_raw["Proportional Allocation"].append(sim_prop_hist["by_year"][2]["coverage"])
 
-    # Συγκέντρωση των τελικών στατιστικών (Mean & Min Coverage)
+    # Mean and minimum coverage for each strategy
     backtest_results = []
     for strategy, coverages in backtest_raw.items():
         backtest_results.append({

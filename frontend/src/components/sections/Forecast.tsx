@@ -6,7 +6,7 @@ import { Divider } from "@/components/tremor/Divider";
 import { LineChart } from "@/components/tremor/LineChart";
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from "@/components/tremor/Select";
 
-// Αφαίρεση του A04AD01 (και του L01CB01 που είχε αφαιρεθεί προηγουμένως) από τα δεδομένα
+// A04AD01 and L01CB01 are left out of the data
 const forecastData = [
   { "Month": "Aug 2026", "M04AC01": 107895.96, "C01AA05": 40410.7, "S01EB01": 7397.51, "S01FA01": 15239.65, "P01BF01": 134.78, "L01CA04": 5213.39 },
   { "Month": "Sep 2026", "M04AC01": 105381.92, "C01AA05": 45275.58, "S01EB01": 10757.33, "S01FA01": 18453.54, "P01BF01": 175.61, "L01CA04": 5505.34 },
@@ -22,7 +22,7 @@ const forecastData = [
   { "Month": "Jul 2027", "M04AC01": 150118.75, "C01AA05": 42119.3, "S01EB01": 9035.18, "S01FA01": 17663.38, "P01BF01": 84.32, "L01CA04": 5581.69 }
 ];
 
-// Αφαίρεση του A04AD01 από το mapping για να μην εμφανίζεται στο dropdown
+// A04AD01 is left out here too, so it doesn't appear in the dropdown
 const atcMapping: Record<string, { name: string; species: string }> = {
   'M04AC01': { name: 'Colchicine', species: 'Gloriosa superba' },
   'C01AA05': { name: 'Digoxin', species: 'Digitalis lanata' },

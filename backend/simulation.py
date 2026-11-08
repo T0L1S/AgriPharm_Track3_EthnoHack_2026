@@ -20,7 +20,7 @@ YEARS = 3
 TOTAL_STEPS = STEPS_PER_YEAR * YEARS
 TOTAL_MONTHS = MONTHS_PER_YEAR * YEARS
 
-SQUARE_AREA = 10.0  # στρέμματα drawn by one square on the map
+SQUARE_AREA = 10.0  # stremmata drawn by one square on the map
 BARE = -1  # cell value: nothing planted
 STUBBLE = -2  # cell value: just harvested
 STUBBLE_STEPS = 3  # weeks a square stays as stubble after harvest
@@ -38,6 +38,24 @@ class Season:
     t_opt_low: float  # °C, full speed from here...
     t_opt_high: float  # °C, ...up to here
     t_max: float  # °C, no growth at or above this
+
+
+@dataclass(frozen=True)
+class Drought:
+    """A dry spell that repeats every year, as in crop_opt's drought scenario.
+
+    A harvest whose crop was in the ground for any month from `start` to `end` gives only
+    `factor` of its normal yield. Months count from 0 (0 = January), as in constraints.csv.
+    """
+
+    factor: float  # share of the yield left, e.g. 0.75
+    start: int  # first dry month, 0 to 11
+    end: int  # last dry month, 0 to 11
+
+    def hits(self, sown_month: int, harvest_month: int) -> bool:
+        """True when any month the crop was growing (sowing month up to the month before
+        harvest) falls in the dry spell."""
+        return any(self.start <= m % MONTHS_PER_YEAR <= self.end for m in range(sown_month, harvest_month))
 
 
 DEFAULT_SEASON = Season(sow_from=3, sow_to=4, t_base=5, t_opt_low=15, t_opt_high=25, t_max=32)
@@ -117,7 +135,8 @@ def crop_calendar(cycle: float, season: Season, temperature: list[float]) -> dic
 
 def simulate_plant(
     area: float, yield_kg: float, cycle: float, monthly_demand: list[float],
-    season: Season, temperature: list[float], strategy: str = "equal"
+    season: Season, temperature: list[float], strategy: str = "equal",
+    drought: Drought | None = None,
 ) -> dict:
     """Play one parcel week by week and track its stock against demand.
 
@@ -132,6 +151,7 @@ def simulate_plant(
     sow_at = sow_weeks(season, squares, strategy) if squares else []
 
     progress: list[float | None] = [None] * squares  # None means no crop in the ground
+    sown_month = [0] * squares  # month each square was last sown, for the drought check
     stubble = [0] * squares
     cells: list[list[int]] = []
     stock_by_step: list[float] = []
@@ -152,13 +172,17 @@ def simulate_plant(
                 if progress[i] >= DONE:
                     progress[i] = None
                     stubble[i] = STUBBLE_STEPS
-                    stock += square_kg
-                    harvest[month] += square_kg
+                    kg = square_kg
+                    if drought is not None and drought.hits(sown_month[i], month):
+                        kg *= drought.factor
+                    stock += kg
+                    harvest[month] += kg
             elif stubble[i] > 0:
                 stubble[i] -= 1
             if progress[i] is None and week == sow_at[i]:
                 progress[i] = 0.0
                 stubble[i] = 0
+                sown_month[i] = month
                 sown[month] += 1
             if progress[i] is not None:
                 row.append(min(99, int(progress[i] * 100)))
@@ -229,9 +253,13 @@ def summarise(parcels: dict[str, dict]) -> list[dict]:
 
 def simulate(
     areas: dict[str, float], plants: dict[str, dict], demand: dict[str, list[float]],
-    seasons: dict[str, Season], monthly_temperature: list[float], strategy: str = "equal"
+    seasons: dict[str, Season], monthly_temperature: list[float], strategy: str = "equal",
+    drought: Drought | None = None,
 ) -> dict:
-    """Run every plant's parcel. Plants share land only through the optimizer's areas."""
+    """Run every plant's parcel. Plants share land only through the optimizer's areas.
+
+    With `drought`, harvests of crops that grew through the dry months lose part of their yield.
+    """
     temperature = weekly_temperature(monthly_temperature)
     parcels = {}
     calendars = {}
@@ -240,7 +268,7 @@ def simulate(
         parcels[name] = simulate_plant(
             area=areas.get(name, 0.0), yield_kg=plant["yield_kg"], cycle=plant["cycle"],
             monthly_demand=demand[name], season=season, temperature=temperature, 
-            strategy=strategy
+            strategy=strategy, drought=drought,
         )
         calendars[name] = crop_calendar(plant["cycle"], season, temperature)
     return {

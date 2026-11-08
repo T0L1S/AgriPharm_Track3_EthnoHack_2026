@@ -212,8 +212,8 @@ show(x, u, s, plants, cycle, demand, constraints["land"])
 
 ## Known limitations
 
-- **Plan start month is fixed to January.** Calendar logic uses `t mod 12`, so month 0 must be January. The forecast starts in August 2026; build `demand.csv` by calendar month (see [`docs/DATA_CONTRACTS.md`](../docs/DATA_CONTRACTS.md)).
-- **Weights are per kg.** With equal weights the LP maximises total kg, so a plant that gives few kg per stremma-month can get no land at all (milk thistle in the current data). When demands differ by orders of magnitude, choose weights deliberately — for example `1 / annual demand`, which makes the LP maximise average % coverage across plants.
+- **Plan start month is fixed to January.** Calendar logic uses `t mod 12`, so month 0 must be January. The forecast starts in August 2026; build `demand.csv` by calendar month, so the `Jan` column holds January 2027 and the `Aug` column August 2026.
+- **Weights are per kg.** With equal weights the LP maximises total kg, so a plant that gives few kg per stremma-month can get no land at all. When demands differ by orders of magnitude, choose weights deliberately — for example `1 / annual demand`, which makes the LP maximise average % coverage across plants.
 - **`EPS` is absolute.** If weights are really small (e.g. 0.01), the 0.001 stock penalty is no longer negligible and changes the plan. `EPS` is a micro-adjustment for the model to run properly and does not affect the end result otherwise.
 - **Cycles of 12 months or longer are not supported**.
 - **All-zero demand** passes validation, then the `Year_` percentage divides by zero.

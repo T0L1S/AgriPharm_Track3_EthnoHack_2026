@@ -46,7 +46,8 @@ def read_demand() -> dict[str, list[float]]:
 
 
 def read_constraints() -> dict[str, float]:
-    """constraints.csv as {column: number}. Only `land` is used today."""
+    """constraints.csv as {column: number}: `land`, plus the drought scenario's `drought` (yield
+    factor), `drought_start` and `drought_end` (months, 0 = January)."""
     row = _rows(CROP_OPT_DIR / "constraints.csv")[0]
     return {key: float(value) for key, value in row.items()}
 
@@ -79,10 +80,10 @@ def read_plant_info() -> dict[str, dict]:
 def read_climates() -> dict[str, dict]:
     return {
         "angers": {
-            "label_el": " ",
+            "label_el": "Γαλλία, Angers",
             "label_en": "France, Angers",
             "monthly": [6.0, 6.4, 9.0, 11.3, 14.7, 18.1, 20.0, 20.1, 16.9, 13.4, 9.1, 6.3],
-            "source": "M o-France 1991-2020 normals for Beaucouz , via Wikipedia",
+            "source": "Météo-France 1991-2020 normals for Beaucouzé, via Wikipedia",
             "url": "https://en.wikipedia.org/wiki/Beaucouz%C3%A9"
         }
     }

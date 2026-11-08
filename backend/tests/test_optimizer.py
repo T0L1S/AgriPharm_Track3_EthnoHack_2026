@@ -1,83 +1,68 @@
+"""Runs the real crop_opt model. Skipped where PuLP is not installed."""
+
 import pytest
 
-import inputs
-import optimizer
-from conftest import greedy_covered
+pytest.importorskip("pulp")
 
-CBC_OUTPUT = """Welcome to the CBC MILP Solver
-Version: 2.10
-Result - Optimal solution found
-Objective value:                158200.00000000
-Status:  Optimal
-Area_chamomile = -0.0
-Area_milk_thistle = 30.0
-Covered_chamomile = 0.0
-Covered_milk_thistle = 2100.0
-Total =  2100.0
-"""
+import optimizer  # noqa: E402  (needs PuLP)
+import simulation  # noqa: E402
 
 
-def test_parser_reads_status_and_variables_through_solver_noise():
-    parsed = optimizer.parse_output(CBC_OUTPUT)
-    assert parsed["status"] == "Optimal"
-    assert parsed["area"] == {"chamomile": 0.0, "milk_thistle": 30.0}
-    assert parsed["covered"]["milk_thistle"] == 2100.0
+def solve(plants, demand, constraints, land, **kwargs):
+    return optimizer.solve(plants, "", demand, {**constraints, "land": land}, **kwargs)
 
 
-@pytest.mark.parametrize(
-    "output, message",
-    [
-        ("Area_a = 1.0\nCovered_a = 1.0\n", "Status"),
-        ("Status:  Infeasible\nArea_a = None\nCovered_a = None\n", "Infeasible"),
-        ("Status:  Optimal\n", "no Area_"),
-        ("Status:  Optimal\nArea_a = None\nCovered_a = 1.0\n", "not a number"),
-    ],
-)
-def test_parser_rejects_unusable_output(output, message):
-    with pytest.raises(optimizer.OptimizerError, match=message):
-        optimizer.parse_output(output)
+def test_default_run_uses_the_land_and_covers_most_demand(plants, demand, constraints):
+    lp = solve(plants, demand, constraints, 400)
+    assert lp["status"] == "Optimal"
+    assert lp["land_used"] == pytest.approx(400, abs=0.1)
+    assert 0.9 < lp["coverage"] < 1.0
+    assert set(lp["plants"]) == set(plants)
 
 
-def test_csv_round_trip_keeps_columns(plants):
-    text = optimizer._plants_csv(plants)
-    assert text.splitlines()[0] == "plant,yield_kg,cycle,cost,weight"
-    assert len(text.splitlines()) == len(plants) + 1
+def test_no_land_covers_nothing(plants, demand, constraints):
+    lp = solve(plants, demand, constraints, 0)
+    assert lp["coverage"] == pytest.approx(0, abs=1e-6)
+    assert lp["land_used"] == pytest.approx(0, abs=1e-6)
 
 
-def solve(plants, demand, land):
-    demand_csv = (inputs.CROP_OPT_DIR / "demand.csv").read_text(encoding="utf-8")
-    return optimizer.solve(plants, demand_csv, demand, {"land": land})
+def test_surplus_land_stays_free(plants, demand, constraints):
+    needed = sum(sum(demand[name]) / plants[name]["yield_kg"] for name in plants)
+    lp = solve(plants, demand, constraints, 2 * needed)
+    assert lp["coverage"] == pytest.approx(1.0, abs=1e-3)
+    assert lp["land_free"] > 0.4 * needed
 
 
-class TestCropScript:
-    """Runs the real crop.py. Skipped where PuLP is not installed."""
+def test_weights_reach_the_optimizer(plants, demand, constraints):
+    """A plant the plan leaves short gets more land when its priority goes up."""
+    base = solve(plants, demand, constraints, 400)["plants"]
+    name = min(base, key=lambda p: base[p]["coverage"])
+    assert base[name]["coverage"] < 1.0
+    plants[name]["weight"] = 10.0
+    after = solve(plants, demand, constraints, 400)["plants"][name]["area"]
+    assert after > base[name]["area"]
 
-    @pytest.fixture(autouse=True)
-    def needs_pulp(self):
-        pytest.importorskip("pulp")
 
-    @pytest.mark.parametrize("land", [0, 100, 300, 540, 1000, 1150, 1300])
-    def test_matches_the_known_optimum(self, plants, demand, land):
-        lp = solve(plants, demand, land)
-        expected = greedy_covered(plants, demand, land)
-        assert lp["status"] == "Optimal"
-        for name, result in lp["plants"].items():
-            assert result["covered"] == pytest.approx(expected[name], abs=1e-3)
+def test_planning_for_drought_costs_coverage(plants, demand, constraints):
+    normal = solve(plants, demand, constraints, 400)
+    dry = solve(plants, demand, constraints, 400, drought_fctr=constraints["drought"])
+    assert dry["coverage"] < normal["coverage"]
 
-    def test_default_run(self, plants, demand):
-        lp = solve(plants, demand, 1000)
-        assert lp["covered"] == pytest.approx(158200)
-        assert lp["plants"]["valerian"]["area"] == pytest.approx(300)
-        assert lp["plants"]["chamomile"]["area"] == pytest.approx(0)
-        assert lp["land_free"] == pytest.approx(0, abs=1e-6)
 
-    def test_weights_reach_the_script(self, plants, demand):
-        plants["chamomile"]["weight"] = 3.0
-        lp = solve(plants, demand, 1000)
-        assert lp["plants"]["chamomile"]["area"] == pytest.approx(150)
+def test_simulation_reaches_the_optimizer_coverage(plants, demand, constraints, seasons, climates):
+    """The field simulation plays out the optimizer's plan and lands on the same year-3 coverage."""
+    lp = solve(plants, demand, constraints, 400)
+    areas = {name: result["area"] for name, result in lp["plants"].items()}
+    sim = simulation.simulate(areas, plants, demand, seasons, climates["angers"]["monthly"])
+    assert sim["by_year"][2]["coverage"] == pytest.approx(lp["coverage"], abs=0.01)
 
-    def test_surplus_land_stays_unallocated(self, plants, demand):
-        lp = solve(plants, demand, 2000)
-        assert lp["coverage"] == pytest.approx(1.0)
-        assert lp["land_used"] == pytest.approx(1300)
-        assert lp["land_free"] == pytest.approx(700)
+
+def test_stochastic_plan_uses_the_land(plants, demand, constraints):
+    scenarios = [
+        {"d_m": 1.0, "y_m": 0.75, "prob": 0.5},
+        {"d_m": 1.0, "y_m": 1.0, "prob": 0.5},
+    ]
+    areas = optimizer.solve_stochastic(plants, demand, {**constraints, "land": 400}, scenarios)
+    assert set(areas) == set(plants)
+    assert all(area >= 0 for area in areas.values())
+    assert sum(areas.values()) == pytest.approx(400, abs=1.0)

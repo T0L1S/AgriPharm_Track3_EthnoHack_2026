@@ -2,10 +2,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { Divider } from '@/components/tremor/Divider';
 import { BarChart } from '@/components/tremor/BarChart';
 import { formatPercent } from '@/lib/formattingUtils';
-
-import { 
-  expectedCostData, scenarioData 
-} from '@/data/chartData';
+import { ResultsPlaceholder } from '@/components/ResultsPlaceholder';
 
 export interface ExpectedCoverage {
   deterministic: number;
@@ -20,28 +17,25 @@ export interface StochasticData {
 
 interface StochasticProps {
   stochasticData?: StochasticData;
+  // true when the server could not be reached
+  failed?: boolean;
 }
 
-export function Stochastic({ stochasticData }: StochasticProps) {
+export function Stochastic({ stochasticData, failed = false }: StochasticProps) {
   const dynamicExpectedData = stochasticData ? [
     { plan: 'Deterministic', 'Expected Coverage': stochasticData.expected_coverage.deterministic * 100 },
     { plan: 'Stochastic', 'Expected Coverage': stochasticData.expected_coverage.stochastic * 100 },
     { plan: 'Perfect Info', 'Expected Coverage': stochasticData.expected_coverage.perfect_information * 100 },
-  ] : expectedCostData;
+  ] : [];
 
-  let dynamicScenarioData = scenarioData;
-
-  if (stochasticData?.scenarios_breakdown) {
-    const breakdown = stochasticData.scenarios_breakdown;
-    
-    if (typeof breakdown === 'object' && breakdown !== null) {
-      dynamicScenarioData = Object.entries(breakdown).map(([key, values]: [string, any]) => ({
+  const breakdown = stochasticData?.scenarios_breakdown;
+  const dynamicScenarioData = breakdown && typeof breakdown === 'object'
+    ? Object.entries(breakdown).map(([key, values]: [string, any]) => ({
         scenario: key,
-        'Deterministic Plan': values.deterministic_plan_coverage * 100, 
+        'Deterministic Plan': values.deterministic_plan_coverage * 100,
         'Stochastic Plan': values.stochastic_plan_coverage * 100
-      }));
-    }
-  }
+      }))
+    : [];
 
   const cardStyle = "bg-white/60 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 sm:p-8 shadow-xl ring-1 ring-slate-200 dark:ring-white/10";
 
@@ -69,6 +63,7 @@ export function Stochastic({ stochasticData }: StochasticProps) {
           </p>
         </div>
 
+        {stochasticData && (
         <div className="p-3">
           <div className={`${cardStyle}`}>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4">
@@ -86,7 +81,12 @@ export function Stochastic({ stochasticData }: StochasticProps) {
             />
           </div>
         </div>
+        )}
       </div>
+
+      {!stochasticData ? (
+        <ResultsPlaceholder failed={failed} className="lg:col-span-7" />
+      ) : (
 
       <div className="lg:col-span-7 flex flex-col justify-center h-full p-3">
         <div className={`flex flex-col justify-center h-full ${cardStyle}`}>
@@ -105,6 +105,7 @@ export function Stochastic({ stochasticData }: StochasticProps) {
           />
         </div>
       </div>
+      )}
     </AnimatedSection>
   );
 }
